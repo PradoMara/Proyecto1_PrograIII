@@ -3,13 +3,6 @@
 
 Este proyecto implementa un **sistema base** de generación de grafos aleatorios conectados con roles asignados. El sistema está diseñado para ser modular y extensible, permitiendo que otros desarrolladores implementen sus propias simulaciones específicas.
 
-### 🎯 Estado del Proyecto: COMPLETADO
-
-✅ **Sistema de generación completo**  
-✅ **Utilidades de análisis implementadas**  
-✅ **Suite de pruebas completa (79 tests, 100% éxito)**  
-✅ **Documentación completa de usuario**  
-✅ **Casos de uso y ejemplos documentados**
 
 ### Estructura del Proyecto
 
