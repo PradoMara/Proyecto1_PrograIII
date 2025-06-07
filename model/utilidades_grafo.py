@@ -9,7 +9,6 @@ import heapq
 
 
 class ConsultorGrafo:
-
     @staticmethod
     def buscar_vertice_por_nombre(grafo: Graph, nombre: str) -> Optional[Vertex]:
     
