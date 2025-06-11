@@ -1,10 +1,3 @@
-"""
-Validador de Rutas por Batería para Drones
-
-Este módulo proporciona funcionalidades para validar si las rutas son factibles
-considerando la autonomía de batería de los drones y la ubicación de las estaciones de recarga.
-"""
-
 from typing import List, Dict, Tuple, Optional, Set
 from dataclasses import dataclass
 from .drone import Dron
@@ -197,8 +190,7 @@ class ValidadorRutasPorBateria:
                 destino=destino,
                 distancia=distancia,
                 consumo_bateria=consumo_bateria,
-                es_recarga=es_recarga
-            ))
+                es_recarga=es_recarga            ))
         
         return segmentos
     
@@ -214,7 +206,7 @@ class ValidadorRutasPorBateria:
         consumo_total = 0.0
         distancia_total = 0.0
         
-        for segmento in segmentos:
+        for i, segmento in enumerate(segmentos):
             distancia_total += segmento.distancia
             
             # Calcular consumo real basado en el dron específico
@@ -223,8 +215,8 @@ class ValidadorRutasPorBateria:
             
             # Verificar si se puede realizar este segmento
             if bateria_actual - consumo_porcentaje < bateria_minima_requerida:
-                if not permitir_recarga or not segmento.es_recarga:
-                    # No se puede completar el segmento
+                if not permitir_recarga:
+                    # Sin recarga permitida, falla
                     return ResultadoValidacion(
                         es_factible=False,
                         bateria_final=bateria_actual,
@@ -233,6 +225,39 @@ class ValidadorRutasPorBateria:
                         consumo_total=consumo_total,
                         distancia_total=distancia_total,
                         mensaje=f"Batería insuficiente para el segmento {segmento.origen} -> {segmento.destino}"
+                    )
+                
+                # Con recarga permitida, buscar estación cercana al origen
+                estaciones_cercanas = self.encontrar_estaciones_cercanas(segmento.origen, radio_busqueda=50.0)
+                
+                if not estaciones_cercanas:
+                    # No hay estaciones cercanas disponibles
+                    return ResultadoValidacion(
+                        es_factible=False,
+                        bateria_final=bateria_actual,
+                        segmentos_criticos=segmentos_criticos + [segmento],
+                        paradas_recarga_necesarias=paradas_recarga,
+                        consumo_total=consumo_total,
+                        distancia_total=distancia_total,
+                        mensaje=f"Sin estaciones de recarga disponibles cerca de {segmento.origen}"
+                    )
+                
+                # Usar la estación más cercana para recargar
+                estacion_id, distancia_estacion = estaciones_cercanas[0]
+                paradas_recarga.append(estacion_id)
+                bateria_actual = 100.0  # Recargar completamente
+                
+                # Ahora verificar si puede hacer el segmento después de recargar
+                if bateria_actual - consumo_porcentaje < bateria_minima_requerida:
+                    # Incluso con recarga completa no puede hacer el segmento
+                    return ResultadoValidacion(
+                        es_factible=False,
+                        bateria_final=bateria_actual,
+                        segmentos_criticos=segmentos_criticos + [segmento],
+                        paradas_recarga_necesarias=paradas_recarga,
+                        consumo_total=consumo_total,
+                        distancia_total=distancia_total,
+                        mensaje=f"Segmento {segmento.origen} -> {segmento.destino} imposible incluso con batería completa"
                     )
             
             # Realizar el segmento
@@ -247,7 +272,8 @@ class ValidadorRutasPorBateria:
             if (permitir_recarga and segmento.es_recarga and 
                 bateria_actual < 80.0):  # Recargar si está por debajo del 80%
                 
-                paradas_recarga.append(segmento.destino)
+                if segmento.destino not in paradas_recarga:  # Evitar duplicados
+                    paradas_recarga.append(segmento.destino)
                 bateria_actual = 100.0  # Asumir recarga completa por simplicidad
         
         # Determinar el resultado final
