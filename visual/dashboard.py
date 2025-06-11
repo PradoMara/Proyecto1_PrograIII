@@ -809,6 +809,278 @@ def actualizar_visualizacion_con_ruta(ruta_calculada: Dict) -> None:
     
     return fig_ruta
 
+def mostrar_clientes_y_ordenes():
+    """Muestra la pestaña de clientes y órdenes con información detallada"""
+    
+    # Verificar si hay simulación activa
+    if st.session_state.grafo_actual is None:
+        st.warning("⚠️ No hay una simulación activa. Ve a la pestaña 'Simulación' para crear una.")
+        return
+    
+    if not st.session_state.clientes_actuales and not st.session_state.ordenes_actuales:
+        st.warning("⚠️ No hay datos de clientes u órdenes generados. Ejecuta una simulación primero.")
+        return
+    
+    st.header("👥 Gestión de Clientes y Órdenes")
+    
+    # Métricas generales
+    col_metricas1, col_metricas2, col_metricas3, col_metricas4 = st.columns(4)
+    
+    with col_metricas1:
+        st.metric(
+            "👥 Total Clientes",
+            len(st.session_state.clientes_actuales)
+        )
+    
+    with col_metricas2:
+        clientes_activos = [c for c in st.session_state.clientes_actuales if c.estado == EstadoCliente.ACTIVO]
+        st.metric(
+            "✅ Clientes Activos",
+            len(clientes_activos)
+        )
+    
+    with col_metricas3:
+        st.metric(
+            "📋 Total Órdenes",
+            len(st.session_state.ordenes_actuales)
+        )
+    
+    with col_metricas4:
+        if st.session_state.ordenes_actuales:
+            valor_total = sum(orden.costo_total for orden in st.session_state.ordenes_actuales)
+            st.metric(
+                "💰 Valor Total",
+                f"${valor_total:,.2f}"
+            )
+        else:
+            st.metric(
+                "💰 Valor Total",
+                "$0.00"
+            )
+    
+    # Pestañas para clientes y órdenes
+    tab_clientes, tab_ordenes = st.tabs(["👤 Clientes", "📦 Órdenes"])
+    
+    # ================== PESTAÑA CLIENTES ==================
+    with tab_clientes:
+        st.subheader("📊 Lista de Clientes")
+        
+        if st.session_state.clientes_actuales:
+            # Filtros
+            col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
+            
+            with col_filtro1:
+                filtro_tipo = st.selectbox(
+                    "Filtrar por Tipo",
+                    ["Todos", "Regular", "Premium", "Corporativo", "VIP"],
+                    key="filtro_tipo_cliente"
+                )
+            
+            with col_filtro2:
+                filtro_estado = st.selectbox(
+                    "Filtrar por Estado",
+                    ["Todos", "Activo", "Inactivo", "Suspendido", "Bloqueado"],
+                    key="filtro_estado_cliente"
+                )
+            
+            with col_filtro3:
+                mostrar_como = st.selectbox(
+                    "Mostrar como",
+                    ["Tabla", "JSON"],
+                    key="vista_clientes"
+                )
+            
+            # Aplicar filtros
+            clientes_filtrados = st.session_state.clientes_actuales
+            
+            if filtro_tipo != "Todos":
+                clientes_filtrados = [c for c in clientes_filtrados 
+                                    if c.tipo.value.title() == filtro_tipo]
+            
+            if filtro_estado != "Todos":
+                clientes_filtrados = [c for c in clientes_filtrados 
+                                    if c.estado.value.title() == filtro_estado]
+            
+            # Mostrar información
+            st.write(f"**Mostrando {len(clientes_filtrados)} de {len(st.session_state.clientes_actuales)} clientes**")
+            
+            if mostrar_como == "Tabla":
+                # Preparar datos para tabla
+                datos_clientes = []
+                for cliente in clientes_filtrados:
+                    datos_clientes.append({
+                        "ID": cliente.cliente_id,
+                        "Nombre": cliente.nombre,
+                        "Tipo": cliente.tipo.value.title(),
+                        "Estado": cliente.estado.value.title(),
+                        "Total Pedidos": cliente.total_pedidos,
+                        "Pedidos Completados": cliente.pedidos_completados,
+                        "Total Gastado": f"${cliente.total_gastado:,.2f}",
+                        "Límite Crédito": f"${cliente.limite_credito:,.2f}",
+                        "Nodo Ubicación": cliente.nodo_ubicacion,
+                        "Email": cliente.email,
+                        "Teléfono": cliente.telefono
+                    })
+                
+                if datos_clientes:
+                    df_clientes = pd.DataFrame(datos_clientes)
+                    st.dataframe(df_clientes, use_container_width=True, hide_index=True)
+                else:
+                    st.info("No hay clientes que coincidan con los filtros seleccionados.")
+            
+            else:  # JSON
+                # Mostrar como JSON expandible
+                for i, cliente in enumerate(clientes_filtrados):
+                    with st.expander(f"Cliente {i+1}: {cliente.nombre} ({cliente.cliente_id})"):
+                        resumen_cliente = cliente.obtener_resumen()
+                        st.json(resumen_cliente)
+        
+        else:
+            st.info("📝 No hay clientes registrados en la simulación actual.")
+    
+    # ================== PESTAÑA ÓRDENES ==================
+    with tab_ordenes:
+        st.subheader("📦 Lista de Órdenes")
+        
+        if st.session_state.ordenes_actuales:
+            # Filtros para órdenes
+            col_filtro1, col_filtro2, col_filtro3, col_filtro4 = st.columns(4)
+            
+            with col_filtro1:
+                filtro_estado_orden = st.selectbox(
+                    "Filtrar por Estado",
+                    ["Todos", "Pendiente", "Confirmada", "En Preparación", "En Tránsito", "Entregada", "Cancelada", "Devuelta"],
+                    key="filtro_estado_orden"
+                )
+            
+            with col_filtro2:
+                filtro_tipo_orden = st.selectbox(
+                    "Filtrar por Tipo",
+                    ["Todos", "Compra", "Entrega", "Recogida", "Intercambio", "Servicio"],
+                    key="filtro_tipo_orden"
+                )
+            
+            with col_filtro3:
+                filtro_prioridad = st.selectbox(
+                    "Filtrar por Prioridad",
+                    ["Todos", "Baja", "Media", "Alta", "Crítica"],
+                    key="filtro_prioridad_orden"
+                )
+            
+            with col_filtro4:
+                mostrar_ordenes_como = st.selectbox(
+                    "Mostrar como",
+                    ["Tabla", "JSON"],
+                    key="vista_ordenes"
+                )
+            
+            # Aplicar filtros
+            ordenes_filtradas = st.session_state.ordenes_actuales
+            
+            if filtro_estado_orden != "Todos":
+                estado_filtro = filtro_estado_orden.lower().replace(" ", "_")
+                ordenes_filtradas = [o for o in ordenes_filtradas 
+                                   if o.estado.value == estado_filtro]
+            
+            if filtro_tipo_orden != "Todos":
+                tipo_filtro = filtro_tipo_orden.lower()
+                ordenes_filtradas = [o for o in ordenes_filtradas 
+                                   if o.tipo.value == tipo_filtro]
+            
+            if filtro_prioridad != "Todos":
+                prioridad_map = {"Baja": 1, "Media": 2, "Alta": 3, "Crítica": 4}
+                prioridad_valor = prioridad_map[filtro_prioridad]
+                ordenes_filtradas = [o for o in ordenes_filtradas 
+                                   if o.prioridad.value == prioridad_valor]
+            
+            # Mostrar información
+            st.write(f"**Mostrando {len(ordenes_filtradas)} de {len(st.session_state.ordenes_actuales)} órdenes**")
+            
+            if mostrar_ordenes_como == "Tabla":
+                # Preparar datos para tabla
+                datos_ordenes = []
+                for orden in ordenes_filtradas:
+                    # Buscar nombre del cliente
+                    cliente_nombre = "Cliente No Encontrado"
+                    for cliente in st.session_state.clientes_actuales:
+                        if cliente.cliente_id == orden.cliente_id:
+                            cliente_nombre = cliente.nombre
+                            break
+                    
+                    datos_ordenes.append({
+                        "ID Orden": orden.orden_id,
+                        "Cliente": cliente_nombre,
+                        "Cliente ID": orden.cliente_id,
+                        "Tipo": orden.tipo.value.title(),
+                        "Estado": orden.estado.value.replace("_", " ").title(),
+                        "Prioridad": list(PrioridadOrden)[orden.prioridad.value - 1].name.title(),
+                        "Origen": orden.nodo_origen,
+                        "Destino": orden.nodo_destino,
+                        "Valor Base": f"${orden.valor_base:,.2f}",
+                        "Costo Total": f"${orden.costo_total:,.2f}",
+                        "Fecha Creación": orden.fecha_creacion.strftime("%Y-%m-%d %H:%M"),
+                        "Fecha Entrega Solicitada": orden.fecha_entrega_solicitada.strftime("%Y-%m-%d"),
+                        "Peso (kg)": f"{orden.peso_kg:.1f}",
+                        "Dimensiones": orden.dimensiones,
+                        "Descripción": orden.descripcion
+                    })
+                
+                if datos_ordenes:
+                    df_ordenes = pd.DataFrame(datos_ordenes)
+                    st.dataframe(df_ordenes, use_container_width=True, hide_index=True)
+                else:
+                    st.info("No hay órdenes que coincidan con los filtros seleccionados.")
+            
+            else:  # JSON
+                # Mostrar como JSON expandible
+                for i, orden in enumerate(ordenes_filtradas):
+                    estado_emoji = {
+                        "pendiente": "⏳",
+                        "confirmada": "✅", 
+                        "en_preparacion": "📦",
+                        "en_transito": "🚚",
+                        "entregada": "✅",
+                        "cancelada": "❌",
+                        "devuelta": "↩️"
+                    }
+                    emoji = estado_emoji.get(orden.estado.value, "📋")
+                    
+                    with st.expander(f"Orden {i+1}: {orden.orden_id} {emoji}"):
+                        resumen_orden = orden.obtener_resumen()
+                        st.json(resumen_orden)
+        
+        else:
+            st.info("📝 No hay órdenes registradas en la simulación actual.")
+    
+    # ================== ESTADÍSTICAS ADICIONALES ==================
+    if st.session_state.clientes_actuales or st.session_state.ordenes_actuales:
+        st.markdown("---")
+        st.subheader("📊 Estadísticas Adicionales")
+        
+        col_stats1, col_stats2 = st.columns(2)
+        
+        with col_stats1:
+            st.write("**📈 Distribución de Clientes por Tipo**")
+            if st.session_state.clientes_actuales:
+                tipos_clientes = {}
+                for cliente in st.session_state.clientes_actuales:
+                    tipo = cliente.tipo.value.title()
+                    tipos_clientes[tipo] = tipos_clientes.get(tipo, 0) + 1
+                
+                for tipo, cantidad in tipos_clientes.items():
+                    st.write(f"• {tipo}: {cantidad} clientes")
+        
+        with col_stats2:
+            st.write("**📦 Distribución de Órdenes por Estado**")
+            if st.session_state.ordenes_actuales:
+                estados_ordenes = {}
+                for orden in st.session_state.ordenes_actuales:
+                    estado = orden.estado.value.replace("_", " ").title()
+                    estados_ordenes[estado] = estados_ordenes.get(estado, 0) + 1
+                
+                for estado, cantidad in estados_ordenes.items():
+                    st.write(f"• {estado}: {cantidad} órdenes")
+
 def main():
     """Función principal del dashboard"""
     
@@ -1047,17 +1319,19 @@ def main():
     with tab2:
         mostrar_exploracion_red()
 
-"""    # PESTAÑA 3: CLIENTES Y ÓRDENES
+    # PESTAÑA 3: CLIENTES Y ÓRDENES
     with tab3:
         mostrar_clientes_y_ordenes()
 
     # PESTAÑA 4: RUTAS
     with tab4:
-        mostrar_analisis_rutas()
+        st.info("🚧 Funcionalidad de análisis de rutas en desarrollo")
+        # mostrar_analisis_rutas()
 
     # PESTAÑA 5: HISTORIAL
     with tab5:
-        mostrar_historial()"""
+        st.info("🚧 Funcionalidad de historial en desarrollo")
+        # mostrar_historial()
 
 if __name__ == "__main__":
     main()
