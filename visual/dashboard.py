@@ -27,8 +27,8 @@ from visual.networkx_adapter import NetworkXAdapter
 from tda.avl_rutas import AVLRutas
 from domain.route import RutaInfo
 from sim.generador_datos import GeneradorDatosSimulacion
-from domain.client import Cliente, TipoCliente, EstadoCliente
-from domain.order import Orden, TipoOrden, PrioridadOrden, EstadoOrden
+from domain.client import Cliente
+from domain.order import Orden
 
 # Configuración de la página
 st.set_page_config(
@@ -833,10 +833,10 @@ def mostrar_clientes_y_ordenes():
         )
     
     with col_metricas2:
-        clientes_activos = [c for c in st.session_state.clientes_actuales if c.estado == EstadoCliente.ACTIVO]
+        # Solo mostrar total de clientes ya que no tenemos estado en el nuevo modelo
         st.metric(
-            "✅ Clientes Activos",
-            len(clientes_activos)
+            "✅ Clientes Totales",
+            len(st.session_state.clientes_actuales)
         )
     
     with col_metricas3:
@@ -847,7 +847,7 @@ def mostrar_clientes_y_ordenes():
     
     with col_metricas4:
         if st.session_state.ordenes_actuales:
-            valor_total = sum(orden.costo_total for orden in st.session_state.ordenes_actuales)
+            valor_total = sum(orden.route_cost for orden in st.session_state.ordenes_actuales)
             st.metric(
                 "💰 Valor Total",
                 f"${valor_total:,.2f}"
@@ -872,16 +872,13 @@ def mostrar_clientes_y_ordenes():
             with col_filtro1:
                 filtro_tipo = st.selectbox(
                     "Filtrar por Tipo",
-                    ["Todos", "Regular", "Premium", "Corporativo", "VIP"],
+                    ["Todos", "regular", "premium", "corporativo", "vip"],
                     key="filtro_tipo_cliente"
                 )
             
             with col_filtro2:
-                filtro_estado = st.selectbox(
-                    "Filtrar por Estado",
-                    ["Todos", "Activo", "Inactivo", "Suspendido", "Bloqueado"],
-                    key="filtro_estado_cliente"
-                )
+                # Simplificado - sin estados
+                st.write("**Información:** Solo campos simplificados")
             
             with col_filtro3:
                 mostrar_como = st.selectbox(
@@ -895,11 +892,7 @@ def mostrar_clientes_y_ordenes():
             
             if filtro_tipo != "Todos":
                 clientes_filtrados = [c for c in clientes_filtrados 
-                                    if c.tipo.value.title() == filtro_tipo]
-            
-            if filtro_estado != "Todos":
-                clientes_filtrados = [c for c in clientes_filtrados 
-                                    if c.estado.value.title() == filtro_estado]
+                                    if c.type == filtro_tipo]
             
             # Mostrar información
             st.write(f"**Mostrando {len(clientes_filtrados)} de {len(st.session_state.clientes_actuales)} clientes**")
@@ -909,17 +902,10 @@ def mostrar_clientes_y_ordenes():
                 datos_clientes = []
                 for cliente in clientes_filtrados:
                     datos_clientes.append({
-                        "ID": cliente.cliente_id,
-                        "Nombre": cliente.nombre,
-                        "Tipo": cliente.tipo.value.title(),
-                        "Estado": cliente.estado.value.title(),
-                        "Total Pedidos": cliente.total_pedidos,
-                        "Pedidos Completados": cliente.pedidos_completados,
-                        "Total Gastado": f"${cliente.total_gastado:,.2f}",
-                        "Límite Crédito": f"${cliente.limite_credito:,.2f}",
-                        "Nodo Ubicación": cliente.nodo_ubicacion,
-                        "Email": cliente.email,
-                        "Teléfono": cliente.telefono
+                        "ID": cliente.client_id,
+                        "Nombre": cliente.name,
+                        "Tipo": cliente.type.title(),
+                        "Total Órdenes": cliente.total_orders
                     })
                 
                 if datos_clientes:
@@ -931,9 +917,14 @@ def mostrar_clientes_y_ordenes():
             else:  # JSON
                 # Mostrar como JSON expandible
                 for i, cliente in enumerate(clientes_filtrados):
-                    with st.expander(f"Cliente {i+1}: {cliente.nombre} ({cliente.cliente_id})"):
-                        resumen_cliente = cliente.obtener_resumen()
-                        st.json(resumen_cliente)
+                    with st.expander(f"Cliente {i+1}: {cliente.name} ({cliente.client_id})"):
+                        cliente_resumen = {
+                            "client_id": cliente.client_id,
+                            "name": cliente.name,
+                            "type": cliente.type,
+                            "total_orders": cliente.total_orders
+                        }
+                        st.json(cliente_resumen)
         
         else:
             st.info("📝 No hay clientes registrados en la simulación actual.")
@@ -949,21 +940,18 @@ def mostrar_clientes_y_ordenes():
             with col_filtro1:
                 filtro_estado_orden = st.selectbox(
                     "Filtrar por Estado",
-                    ["Todos", "Pendiente", "Confirmada", "En Preparación", "En Tránsito", "Entregada", "Cancelada", "Devuelta"],
+                    ["Todos", "pending", "delivered"],
                     key="filtro_estado_orden"
                 )
             
             with col_filtro2:
-                filtro_tipo_orden = st.selectbox(
-                    "Filtrar por Tipo",
-                    ["Todos", "Compra", "Entrega", "Recogida", "Intercambio", "Servicio"],
-                    key="filtro_tipo_orden"
-                )
+                # Simplificado
+                st.write("**Estados:** pending, delivered")
             
             with col_filtro3:
                 filtro_prioridad = st.selectbox(
                     "Filtrar por Prioridad",
-                    ["Todos", "Baja", "Media", "Alta", "Crítica"],
+                    ["Todos", "low", "normal", "high", "critical"],
                     key="filtro_prioridad_orden"
                 )
             
@@ -978,20 +966,12 @@ def mostrar_clientes_y_ordenes():
             ordenes_filtradas = st.session_state.ordenes_actuales
             
             if filtro_estado_orden != "Todos":
-                estado_filtro = filtro_estado_orden.lower().replace(" ", "_")
                 ordenes_filtradas = [o for o in ordenes_filtradas 
-                                   if o.estado.value == estado_filtro]
-            
-            if filtro_tipo_orden != "Todos":
-                tipo_filtro = filtro_tipo_orden.lower()
-                ordenes_filtradas = [o for o in ordenes_filtradas 
-                                   if o.tipo.value == tipo_filtro]
+                                   if o.status == filtro_estado_orden]
             
             if filtro_prioridad != "Todos":
-                prioridad_map = {"Baja": 1, "Media": 2, "Alta": 3, "Crítica": 4}
-                prioridad_valor = prioridad_map[filtro_prioridad]
                 ordenes_filtradas = [o for o in ordenes_filtradas 
-                                   if o.prioridad.value == prioridad_valor]
+                                   if o.priority == filtro_prioridad]
             
             # Mostrar información
             st.write(f"**Mostrando {len(ordenes_filtradas)} de {len(st.session_state.ordenes_actuales)} órdenes**")
@@ -1003,26 +983,21 @@ def mostrar_clientes_y_ordenes():
                     # Buscar nombre del cliente
                     cliente_nombre = "Cliente No Encontrado"
                     for cliente in st.session_state.clientes_actuales:
-                        if cliente.cliente_id == orden.cliente_id:
-                            cliente_nombre = cliente.nombre
+                        if cliente.client_id == orden.client_id:
+                            cliente_nombre = cliente.name
                             break
                     
                     datos_ordenes.append({
-                        "ID Orden": orden.orden_id,
+                        "ID Orden": orden.order_id,
                         "Cliente": cliente_nombre,
-                        "Cliente ID": orden.cliente_id,
-                        "Tipo": orden.tipo.value.title(),
-                        "Estado": orden.estado.value.replace("_", " ").title(),
-                        "Prioridad": list(PrioridadOrden)[orden.prioridad.value - 1].name.title(),
-                        "Origen": orden.nodo_origen,
-                        "Destino": orden.nodo_destino,
-                        "Valor Base": f"${orden.valor_base:,.2f}",
-                        "Costo Total": f"${orden.costo_total:,.2f}",
-                        "Fecha Creación": orden.fecha_creacion.strftime("%Y-%m-%d %H:%M"),
-                        "Fecha Entrega Solicitada": orden.fecha_entrega_solicitada.strftime("%Y-%m-%d"),
-                        "Peso (kg)": f"{orden.peso_kg:.1f}",
-                        "Dimensiones": orden.dimensiones,
-                        "Descripción": orden.descripcion
+                        "Cliente ID": orden.client_id,
+                        "Estado": orden.status,
+                        "Prioridad": orden.priority,
+                        "Origen": orden.origin,
+                        "Destino": orden.destination,
+                        "Costo Ruta": f"${orden.route_cost:,.2f}",
+                        "Fecha Creación": orden.created_at.strftime("%Y-%m-%d %H:%M"),
+                        "Fecha Entrega": orden.delivered_at.strftime("%Y-%m-%d %H:%M") if orden.delivered_at else "Pendiente"
                     })
                 
                 if datos_ordenes:
@@ -1035,19 +1010,25 @@ def mostrar_clientes_y_ordenes():
                 # Mostrar como JSON expandible
                 for i, orden in enumerate(ordenes_filtradas):
                     estado_emoji = {
-                        "pendiente": "⏳",
-                        "confirmada": "✅", 
-                        "en_preparacion": "📦",
-                        "en_transito": "🚚",
-                        "entregada": "✅",
-                        "cancelada": "❌",
-                        "devuelta": "↩️"
+                        "pending": "⏳",
+                        "delivered": "✅"
                     }
-                    emoji = estado_emoji.get(orden.estado.value, "📋")
+                    emoji = estado_emoji.get(orden.status, "📋")
                     
-                    with st.expander(f"Orden {i+1}: {orden.orden_id} {emoji}"):
-                        resumen_orden = orden.obtener_resumen()
-                        st.json(resumen_orden)
+                    with st.expander(f"Orden {i+1}: {orden.order_id} {emoji}"):
+                        orden_resumen = {
+                            "order_id": orden.order_id,
+                            "client": orden.client,
+                            "client_id": orden.client_id,
+                            "origin": orden.origin,
+                            "destination": orden.destination,
+                            "status": orden.status,
+                            "priority": orden.priority,
+                            "created_at": orden.created_at.isoformat(),
+                            "delivered_at": orden.delivered_at.isoformat() if orden.delivered_at else None,
+                            "route_cost": orden.route_cost
+                        }
+                        st.json(orden_resumen)
         
         else:
             st.info("📝 No hay órdenes registradas en la simulación actual.")
@@ -1064,7 +1045,7 @@ def mostrar_clientes_y_ordenes():
             if st.session_state.clientes_actuales:
                 tipos_clientes = {}
                 for cliente in st.session_state.clientes_actuales:
-                    tipo = cliente.tipo.value.title()
+                    tipo = cliente.type.title()
                     tipos_clientes[tipo] = tipos_clientes.get(tipo, 0) + 1
                 
                 for tipo, cantidad in tipos_clientes.items():
@@ -1075,7 +1056,7 @@ def mostrar_clientes_y_ordenes():
             if st.session_state.ordenes_actuales:
                 estados_ordenes = {}
                 for orden in st.session_state.ordenes_actuales:
-                    estado = orden.estado.value.replace("_", " ").title()
+                    estado = orden.status.title()
                     estados_ordenes[estado] = estados_ordenes.get(estado, 0) + 1
                 
                 for estado, cantidad in estados_ordenes.items():
@@ -1296,8 +1277,8 @@ def _generar_rutas_desde_ordenes(incluir_explorador=True):
         conteo_rutas = {}
         
         for orden in st.session_state.ordenes_actuales:
-            origen_id = orden.nodo_origen
-            destino_id = orden.nodo_destino
+            origen_id = orden.origin
+            destino_id = orden.destination
             
             # Buscar nodos en el grafo
             if origen_id in nodos_dict and destino_id in nodos_dict:
@@ -1576,7 +1557,7 @@ def main():
                 st.write(f"📋 Órdenes: {len(st.session_state.ordenes_actuales)}")
                 
                 if st.session_state.ordenes_actuales:
-                    valor_total = sum(orden.costo_total for orden in st.session_state.ordenes_actuales)
+                    valor_total = sum(orden.route_cost for orden in st.session_state.ordenes_actuales)
                     st.write(f"💰 Valor Total: ${valor_total:,.2f}")
         else:
             st.info("⏳ Sin grafo cargado")
