@@ -10,6 +10,9 @@ from .route import (
     calcular_estadisticas_rutas
 )
 
+# Importar clases relacionadas con drones
+from .drone import Dron, EstadoDron
+
 __all__ = [
     'RutaInfo',
     'NodoAVLRuta', 
@@ -18,5 +21,7 @@ __all__ = [
     'crear_ruta_desde_vertices',
     'filtrar_rutas_por_frecuencia',
     'agrupar_rutas_por_origen_destino',
-    'calcular_estadisticas_rutas'
+    'calcular_estadisticas_rutas',
+    'Dron',
+    'EstadoDron'
 ]
