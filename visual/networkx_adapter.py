@@ -9,15 +9,21 @@ la visualización y análisis con herramientas estándar.
 """
 
 import networkx as nx
-from typing import Dict, List, Optional, Tuple, Any
 import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
+from typing import Dict, List, Optional, Any, Tuple
+import sys
+import os
 
 from model.graph_base import Graph
 from model.vertex_base import Vertex
 from model.edge_base import Edge
 from model.generador_grafo import RolNodo
+
+
+# Agregar el directorio raíz del proyecto al path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class NetworkXAdapter:
@@ -92,16 +98,16 @@ class NetworkXAdapter:
                                   resaltar_camino: Optional[List[int]] = None,
                                   titulo: str = "Grafo de Red") -> go.Figure:
         """
-        Crea una visualización interactiva con Plotly
+        Crea una visualización interactiva del grafo con Plotly
         
         Args:
             G: Grafo NetworkX
             pos: Posiciones de nodos (opcional)
-            resaltar_camino: Lista de IDs de nodos que forman un camino a resaltar
+            resaltar_camino: Lista de IDs de nodos para resaltar como ruta
             titulo: Título del gráfico
             
         Returns:
-            go.Figure: Figura de Plotly
+            go.Figure: Visualización Plotly del grafo
         """
         if len(G.nodes()) == 0:
             fig = go.Figure()
@@ -114,11 +120,11 @@ class NetworkXAdapter:
             )
             return fig
         
-        # Crear layout si no se proporciona
+        # Calcular posiciones si no se proporcionan
         if pos is None:
-            pos = NetworkXAdapter.crear_layout_interactivo(G, "spring")
+            pos = nx.spring_layout(G, k=1, iterations=50)
         
-        # Preparar datos de aristas
+        # Crear trazos de aristas
         edge_x = []
         edge_y = []
         edge_info = []
@@ -130,16 +136,36 @@ class NetworkXAdapter:
             edge_y.extend([y0, y1, None])
             
             # Información de la arista
-            peso = G.edges[edge].get('peso', 1.0)
-            edge_info.append(f"Peso: {peso}")
+            peso = G[edge[0]][edge[1]].get('weight', 1.0)
+            edge_info.append(f"Arista {edge[0]} ↔ {edge[1]}<br>Peso: {peso:.2f}")
         
-        # Crear trazos de aristas
         edge_trace = go.Scatter(
             x=edge_x, y=edge_y,
-            line=dict(width=2, color='#888'),
+            line=dict(width=0.5, color='#888'),
             hoverinfo='none',
             mode='lines'
         )
+        
+        # Crear trazos de aristas resaltadas si hay camino
+        highlighted_edge_trace = None
+        if resaltar_camino and len(resaltar_camino) > 1:
+            highlight_edge_x = []
+            highlight_edge_y = []
+            
+            for i in range(len(resaltar_camino) - 1):
+                if resaltar_camino[i] in pos and resaltar_camino[i+1] in pos:
+                    x0, y0 = pos[resaltar_camino[i]]
+                    x1, y1 = pos[resaltar_camino[i+1]]
+                    highlight_edge_x.extend([x0, x1, None])
+                    highlight_edge_y.extend([y0, y1, None])
+            
+            highlighted_edge_trace = go.Scatter(
+                x=highlight_edge_x, y=highlight_edge_y,
+                line=dict(width=4, color='#FF4444'),
+                hoverinfo='none',
+                mode='lines',
+                name='Ruta Resaltada'
+            )
         
         # Preparar datos de nodos
         node_x = []
@@ -164,32 +190,38 @@ class NetworkXAdapter:
             
             # Información del nodo
             node_data = G.nodes[node]
-            rol = node_data.get('rol', 'sin_rol')
             nombre = node_data.get('nombre', f'Nodo {node}')
+            rol = node_data.get('rol', 'sin_rol')
+            grado = G.degree(node)
             
-            node_text.append(nombre)
-            node_colors.append(color_map.get(rol, '#95A5A6'))
+            node_text.append(str(node))
+            node_colors.append(color_map.get(rol, color_map['sin_rol']))
             
             # Tamaño basado en grado
-            grado = G.degree(node)
-            node_sizes.append(max(20, min(50, 20 + grado * 3)))
+            base_size = 20
+            size_multiplier = 1 + (grado * 0.3)
+            node_sizes.append(base_size * size_multiplier)
             
-            # Información para hover
-            info = f"<b>{nombre}</b><br>"
-            info += f"ID: {node}<br>"
-            info += f"Rol: {rol}<br>"
-            info += f"Grado: {grado}"
-            if 'activo' in node_data:
-                info += f"<br>Activo: {'Sí' if node_data['activo'] else 'No'}"
-            
+            # Información hover
+            info = (f"<b>{nombre}</b><br>"
+                   f"ID: {node}<br>"
+                   f"Rol: {rol.title()}<br>"
+                   f"Grado: {grado}<br>"
+                   f"Coordenadas: ({x:.2f}, {y:.2f})")
             node_info.append(info)
         
         # Resaltar camino si se proporciona
         if resaltar_camino:
             for i, node in enumerate(G.nodes()):
                 if node in resaltar_camino:
-                    node_colors[i] = '#FFD700'  # Dorado para nodos del camino
-                    node_sizes[i] = node_sizes[i] * 1.5
+                    # Hacer los nodos del camino más grandes y con borde destacado
+                    node_sizes[i] *= 1.5
+                    if node == resaltar_camino[0]:
+                        node_colors[i] = '#00FF00'  # Verde para origen
+                    elif node == resaltar_camino[-1]:
+                        node_colors[i] = '#FF0000'  # Rojo para destino
+                    else:
+                        node_colors[i] = '#FFA500'  # Naranja para nodos intermedios
         
         # Crear trazo de nodos
         node_trace = go.Scatter(
@@ -208,7 +240,11 @@ class NetworkXAdapter:
         )
         
         # Crear figura
-        fig = go.Figure(data=[edge_trace, node_trace])
+        data = [edge_trace, node_trace]
+        if highlighted_edge_trace:
+            data.insert(1, highlighted_edge_trace)  # Insertar antes de los nodos
+        
+        fig = go.Figure(data=data)
         
         fig.update_layout(
             title=dict(text=titulo, font=dict(size=16)),

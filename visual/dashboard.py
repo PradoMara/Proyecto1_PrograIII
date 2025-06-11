@@ -778,6 +778,37 @@ def mostrar_analisis_detallado():
             df_roles = pd.DataFrame(datos_roles)
             st.dataframe(df_roles, use_container_width=True, hide_index=True)
 
+def actualizar_visualizacion_con_ruta(ruta_calculada: Dict) -> None:
+    """Actualiza la visualización del grafo resaltando la ruta calculada"""
+    if st.session_state.networkx_graph is None or not ruta_calculada:
+        return
+    
+    # Extraer IDs de la ruta
+    camino = ruta_calculada['camino']
+    ruta_ids = [v.element()['id'] for v in camino]
+    
+    # Crear visualización con ruta resaltada
+    fig_ruta = NetworkXAdapter.resaltar_ruta_en_grafo(
+        st.session_state.networkx_graph,
+        ruta_ids
+    )
+    
+    # Mostrar información adicional de la ruta
+    st.success(f"✅ Ruta calculada: {ruta_calculada['origen']['nombre']} → {ruta_calculada['destino']['nombre']}")
+    
+    col_info1, col_info2, col_info3 = st.columns(3)
+    with col_info1:
+        st.metric("📏 Distancia Total", f"{ruta_calculada['distancia']:.2f} km")
+    with col_info2:
+        st.metric("🔢 Número de Saltos", len(camino) - 1)
+    with col_info3:
+        st.metric("📍 Nodos en Ruta", len(camino))
+    
+    # Mostrar la visualización
+    st.plotly_chart(fig_ruta, use_container_width=True, key="ruta_resaltada")
+    
+    return fig_ruta
+
 def main():
     """Función principal del dashboard"""
     
@@ -1016,7 +1047,7 @@ def main():
     with tab2:
         mostrar_exploracion_red()
 
-    # PESTAÑA 3: CLIENTES Y ÓRDENES
+"""    # PESTAÑA 3: CLIENTES Y ÓRDENES
     with tab3:
         mostrar_clientes_y_ordenes()
 
@@ -1026,7 +1057,7 @@ def main():
 
     # PESTAÑA 5: HISTORIAL
     with tab5:
-        mostrar_historial()
+        mostrar_historial()"""
 
 if __name__ == "__main__":
     main()
