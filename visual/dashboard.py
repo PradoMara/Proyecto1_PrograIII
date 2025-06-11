@@ -244,8 +244,484 @@ def ejecutar_simulacion(config: Dict) -> Tuple[bool, Optional[Dict], Optional[st
     except Exception as e:
         return False, None, f"Error al generar el grafo: {str(e)}"
 
+def mostrar_exploracion_red():
+    """Muestra la interfaz de exploración de red con cálculo de rutas interactivo"""
+    if st.session_state.grafo_actual is None:
+        st.warning("⚠️ No hay un grafo generado. Ve a la pestaña 'Simulación' para crear uno.")
+        return
+    
+    st.header("🌐 Exploración de Red y Cálculo de Rutas")
+    
+    grafo = st.session_state.grafo_actual
+    
+    # Inicializar variables de estado para la pestaña
+    if 'nodos_seleccionados' not in st.session_state:
+        st.session_state.nodos_seleccionados = []
+    if 'ruta_calculada' not in st.session_state:
+        st.session_state.ruta_calculada = None
+    if 'historial_rutas' not in st.session_state:
+        st.session_state.historial_rutas = []
+    
+    # Convertir a NetworkX si no existe
+    if st.session_state.networkx_graph is None:
+        st.session_state.networkx_graph = NetworkXAdapter.convertir_a_networkx(st.session_state.grafo_actual)
+    
+    nx_graph = st.session_state.networkx_graph
+    vertices = list(grafo.vertices())
+    
+    # === SECCIÓN 1: VISUALIZACIÓN PRINCIPAL ===
+    st.subheader("🗺️ Mapa de la Red")
+    
+    # Controles de visualización
+    col_viz1, col_viz2, col_viz3 = st.columns(3)
+    
+    with col_viz1:
+        layout_type = st.selectbox(
+            "Layout del Grafo",
+            ["spring", "circular", "kamada_kawai", "random"],
+            help="Algoritmo de posicionamiento de nodos"
+        )
+    
+    with col_viz2:
+        mostrar_info_nodos = st.checkbox("Mostrar Info de Nodos", value=True)
+    
+    with col_viz3:
+        auto_zoom = st.checkbox("Auto-zoom en Ruta", value=True)
+    
+    # Crear visualización principal
+    if len(vertices) <= 100:  # Limitar para grafos grandes
+        # Determinar si hay una ruta para resaltar
+        ruta_ids = None
+        if st.session_state.ruta_calculada:
+            ruta_ids = [v.element()['id'] for v in st.session_state.ruta_calculada['camino']]
+        
+        fig_principal = NetworkXAdapter.crear_visualizacion_plotly(
+            nx_graph,
+            resaltar_camino=ruta_ids,
+            titulo="Red de Distribución - Exploración Interactiva"
+        )
+        
+        # Ajustar altura y mostrar
+        fig_principal.update_layout(height=500)
+        st.plotly_chart(fig_principal, use_container_width=True)
+        
+        # Información de la ruta actual si existe
+        if st.session_state.ruta_calculada:
+            col_info1, col_info2, col_info3, col_info4 = st.columns(4)
+            
+            with col_info1:
+                st.metric(
+                    "🎯 Origen", 
+                    st.session_state.ruta_calculada['origen']['nombre']
+                )
+            
+            with col_info2:
+                st.metric(
+                    "📍 Destino", 
+                    st.session_state.ruta_calculada['destino']['nombre']
+                )
+            
+            with col_info3:
+                st.metric(
+                    "📏 Distancia Total", 
+                    f"{st.session_state.ruta_calculada['distancia']:.2f}"
+                )
+            
+            with col_info4:
+                st.metric(
+                    "🔢 Número de Saltos", 
+                    len(st.session_state.ruta_calculada['camino']) - 1
+                )
+    
+    else:
+        st.warning("⚠️ Grafo demasiado grande para visualización interactiva (>100 nodos)")
+        st.info("📊 Usa las herramientas de selección y cálculo de rutas a continuación.")
+    
+    st.markdown("---")
+    
+    # === SECCIÓN 2: SELECCIÓN DE NODOS ===
+    st.subheader("🎯 Selección de Nodos")
+    
+    col_sel1, col_sel2 = st.columns(2)
+    
+    with col_sel1:
+        st.write("**🚀 Nodo Origen**")
+        
+        # Filtros para nodo origen
+        filtro_rol_origen = st.selectbox(
+            "Filtrar por Rol (Origen)",
+            ["Todos"] + [RolNodo.ALMACENAMIENTO, RolNodo.RECARGA, RolNodo.CLIENTE],
+            key="filtro_rol_origen"
+        )
+        
+        # Filtrar opciones de origen
+        opciones_origen = []
+        for v in vertices:
+            datos = v.element()
+            if filtro_rol_origen == "Todos" or datos.get('rol') == filtro_rol_origen:
+                opciones_origen.append(v)
+        
+        if opciones_origen:
+            # Crear opciones legibles
+            opciones_origen_texto = [
+                f"ID {v.element()['id']} | {v.element()['nombre']} | {v.element().get('rol', 'sin_rol').title()}"
+                for v in opciones_origen
+            ]
+            
+            idx_origen = st.selectbox(
+                "Seleccionar Origen",
+                range(len(opciones_origen)),
+                format_func=lambda x: opciones_origen_texto[x],
+                key="selector_origen"
+            )
+            
+            nodo_origen = opciones_origen[idx_origen]
+            
+            # Mostrar información del nodo origen
+            origen_info = nodo_origen.element()
+            st.info(f"**Seleccionado:** {origen_info['nombre']}")
+            st.write(f"• **ID:** {origen_info['id']}")
+            st.write(f"• **Rol:** {origen_info.get('rol', 'sin_rol').title()}")
+            st.write(f"• **Grado:** {ConsultorGrafo.obtener_grado(grafo, nodo_origen)}")
+        
+        else:
+            st.warning("No hay nodos disponibles con el filtro seleccionado")
+            nodo_origen = None
+    
+    with col_sel2:
+        st.write("**🎯 Nodo Destino**")
+        
+        # Filtros para nodo destino
+        filtro_rol_destino = st.selectbox(
+            "Filtrar por Rol (Destino)",
+            ["Todos"] + [RolNodo.ALMACENAMIENTO, RolNodo.RECARGA, RolNodo.CLIENTE],
+            key="filtro_rol_destino"
+        )
+        
+        # Filtrar opciones de destino (excluyendo el origen)
+        opciones_destino = []
+        for v in vertices:
+            datos = v.element()
+            if (filtro_rol_destino == "Todos" or datos.get('rol') == filtro_rol_destino) and \
+               (nodo_origen is None or v != nodo_origen):
+                opciones_destino.append(v)
+        
+        if opciones_destino and nodo_origen is not None:
+            # Crear opciones legibles
+            opciones_destino_texto = [
+                f"ID {v.element()['id']} | {v.element()['nombre']} | {v.element().get('rol', 'sin_rol').title()}"
+                for v in opciones_destino
+            ]
+            
+            idx_destino = st.selectbox(
+                "Seleccionar Destino",
+                range(len(opciones_destino)),
+                format_func=lambda x: opciones_destino_texto[x],
+                key="selector_destino"
+            )
+            
+            nodo_destino = opciones_destino[idx_destino]
+            
+            # Mostrar información del nodo destino
+            destino_info = nodo_destino.element()
+            st.info(f"**Seleccionado:** {destino_info['nombre']}")
+            st.write(f"• **ID:** {destino_info['id']}")
+            st.write(f"• **Rol:** {destino_info.get('rol', 'sin_rol').title()}")
+            st.write(f"• **Grado:** {ConsultorGrafo.obtener_grado(grafo, nodo_destino)}")
+        
+        else:
+            if nodo_origen is None:
+                st.info("Primero selecciona un nodo origen")
+            else:
+                st.warning("No hay nodos de destino disponibles con el filtro seleccionado")
+            nodo_destino = None
+    
+    # === SECCIÓN 3: CÁLCULO DE RUTAS ===
+    st.markdown("---")
+    st.subheader("🔍 Cálculo de Rutas")
+    
+    col_calc1, col_calc2, col_calc3 = st.columns([2, 1, 1])
+    
+    with col_calc1:
+        # Botón principal de cálculo
+        calcular_disabled = nodo_origen is None or nodo_destino is None or nodo_origen == nodo_destino
+        
+        if st.button(
+            "🗺️ Calcular Ruta Óptima",
+            type="primary",
+            disabled=calcular_disabled,
+            help="Calcula la ruta más corta usando el algoritmo de Dijkstra"
+        ):
+            if nodo_origen and nodo_destino:
+                with st.spinner("🔄 Calculando ruta óptima..."):
+                    resultado = CalculadorDistancias.encontrar_camino_mas_corto(
+                        grafo, nodo_origen, nodo_destino
+                    )
+                    
+                    if resultado:
+                        camino, distancia_total = resultado
+                        
+                        # Guardar resultado en session state
+                        st.session_state.ruta_calculada = {
+                            'origen': nodo_origen.element(),
+                            'destino': nodo_destino.element(),
+                            'camino': camino,
+                            'distancia': distancia_total,
+                            'timestamp': datetime.now()
+                        }
+                        
+                        # Agregar al historial
+                        ruta_historial = {
+                            'id': len(st.session_state.historial_rutas) + 1,
+                            'origen_id': nodo_origen.element()['id'],
+                            'destino_id': nodo_destino.element()['id'],
+                            'origen_nombre': nodo_origen.element()['nombre'],
+                            'destino_nombre': nodo_destino.element()['nombre'],
+                            'distancia': distancia_total,
+                            'saltos': len(camino) - 1,
+                            'timestamp': datetime.now()
+                        }
+                        st.session_state.historial_rutas.append(ruta_historial)
+                        
+                        # Guardar en AVL de rutas
+                        ruta_id = f"explorador_{nodo_origen.element()['id']}_{nodo_destino.element()['id']}"
+                        ruta_info = RutaInfo(
+                            ruta_id=ruta_id,
+                            origen=nodo_origen.element()['nombre'],
+                            destino=nodo_destino.element()['nombre'],
+                            camino=[v.element()['nombre'] for v in camino],
+                            distancia=distancia_total,
+                            frecuencia_uso=1,
+                            ultimo_uso=datetime.now(),
+                            tiempo_promedio=0.0,
+                            metadatos={"creado_en": "explorador", "tipo": "busqueda_interactiva"}
+                        )
+                        st.session_state.avl_rutas.insertar_ruta(ruta_info)
+                        
+                        st.success("✅ ¡Ruta calculada exitosamente!")
+                        st.rerun()
+                    
+                    else:
+                        st.error("❌ No se encontró una ruta entre los nodos seleccionados")
+                        st.info("💡 Verifica que los nodos estén en la misma componente conexa del grafo")
+    
+    with col_calc2:
+        if st.button("🔄 Limpiar Ruta", help="Limpia la ruta actual"):
+            st.session_state.ruta_calculada = None
+            st.rerun()
+    
+    with col_calc3:
+        if st.button("📋 Ver Historial", help="Muestra el historial de rutas calculadas"):
+            if st.session_state.historial_rutas:
+                st.session_state.mostrar_historial_rutas = True
+            else:
+                st.info("📝 No hay rutas en el historial")
+    
+    # === SECCIÓN 4: DETALLES DE LA RUTA ACTUAL ===
+    if st.session_state.ruta_calculada:
+        st.markdown("---")
+        st.subheader("📋 Detalles de la Ruta Calculada")
+        
+        ruta_actual = st.session_state.ruta_calculada
+        camino = ruta_actual['camino']
+        
+        # Información general
+        col_det1, col_det2 = st.columns([2, 1])
+        
+        with col_det1:
+            st.write("**🛣️ Camino Completo:**")
+            
+            # Mostrar el camino paso a paso
+            camino_texto = []
+            for i, nodo in enumerate(camino):
+                nombre = nodo.element()['nombre']
+                rol = nodo.element().get('rol', 'sin_rol')
+                emoji_rol = {"almacenamiento": "🏪", "recarga": "⚡", "cliente": "👤"}.get(rol, "📍")
+                
+                if i == 0:
+                    camino_texto.append(f"🚀 **{nombre}** {emoji_rol}")
+                elif i == len(camino) - 1:
+                    camino_texto.append(f"🎯 **{nombre}** {emoji_rol}")
+                else:
+                    camino_texto.append(f"   ↓ {nombre} {emoji_rol}")
+            
+            for texto in camino_texto:
+                st.write(texto)
+        
+        with col_det2:
+            st.write("**📊 Estadísticas:**")
+            st.metric("Distancia Total", f"{ruta_actual['distancia']:.2f} km")
+            st.metric("Número de Saltos", len(camino) - 1)
+            st.metric("Nodos Intermedios", max(0, len(camino) - 2))
+            
+            # Tiempo de cálculo
+            tiempo_calc = datetime.now() - ruta_actual['timestamp']
+            st.write(f"⏱️ Calculada hace: {tiempo_calc.total_seconds():.1f}s")
+        
+        # Tabla detallada de segmentos
+        st.write("**📏 Análisis por Segmentos:**")
+        
+        if len(camino) > 1:
+            datos_segmentos = []
+            distancia_acumulada = 0
+            
+            for i in range(len(camino) - 1):
+                nodo_actual = camino[i]
+                nodo_siguiente = camino[i + 1]
+                
+                # Calcular distancia del segmento
+                distancia_segmento = CalculadorDistancias.calcular_distancia_entre(
+                    grafo, nodo_actual, nodo_siguiente
+                )
+                
+                if distancia_segmento is not None:
+                    distancia_acumulada += distancia_segmento
+                    
+                    datos_segmentos.append({
+                        "Segmento": f"{i + 1}",
+                        "Desde": nodo_actual.element()['nombre'],
+                        "Hacia": nodo_siguiente.element()['nombre'],
+                        "Distancia": f"{distancia_segmento:.2f} km",
+                        "Distancia Acum.": f"{distancia_acumulada:.2f} km",
+                        "Rol Origen": nodo_actual.element().get('rol', 'sin_rol').title(),
+                        "Rol Destino": nodo_siguiente.element().get('rol', 'sin_rol').title()
+                    })
+            
+            if datos_segmentos:
+                df_segmentos = pd.DataFrame(datos_segmentos)
+                st.dataframe(df_segmentos, use_container_width=True, hide_index=True)
+        
+        # Acciones adicionales
+        col_acc1, col_acc2, col_acc3 = st.columns(3)
+        
+        with col_acc1:
+            if st.button("💾 Guardar Ruta", help="Guarda la ruta con un nombre personalizado"):
+                st.info("🚧 Funcionalidad de guardado personalizado en desarrollo")
+        
+        with col_acc2:
+            if st.button("📤 Exportar Ruta", help="Exporta la ruta en formato JSON"):
+                ruta_export = {
+                    'origen': ruta_actual['origen'],
+                    'destino': ruta_actual['destino'],
+                    'camino': [nodo.element() for nodo in camino],
+                    'distancia_total': ruta_actual['distancia'],
+                    'fecha_calculo': ruta_actual['timestamp'].isoformat()
+                }
+                st.json(ruta_export)
+        
+        with col_acc3:
+            if st.button("🔍 Analizar Ruta", help="Análisis detallado de la ruta"):
+                st.info("🚧 Análisis avanzado de rutas en desarrollo")
+    
+    # === SECCIÓN 5: HERRAMIENTAS ADICIONALES ===
+    st.markdown("---")
+    st.subheader("🛠️ Herramientas de Exploración")
+    
+    col_herr1, col_herr2 = st.columns(2)
+    
+    with col_herr1:
+        st.write("**🎯 Búsqueda por Proximidad**")
+        
+        if nodo_origen:
+            rol_busqueda = st.selectbox(
+                "Buscar nodos cercanos de tipo:",
+                [RolNodo.ALMACENAMIENTO, RolNodo.RECARGA, RolNodo.CLIENTE],
+                format_func=lambda x: x.title(),
+                key="rol_busqueda_proximidad"
+            )
+            
+            k_cercanos = st.slider("Número de nodos más cercanos:", 1, 10, 3, key="k_cercanos_prox")
+            
+            if st.button("🔍 Buscar Nodos Cercanos"):
+                resultado_cercanos = BuscadorNodos.buscar_k_nodos_mas_cercanos_por_rol(
+                    grafo, nodo_origen, rol_busqueda, k_cercanos
+                )
+                
+                if resultado_cercanos:
+                    st.success(f"✅ Encontrados {len(resultado_cercanos)} nodos cercanos")
+                    
+                    datos_cercanos = []
+                    for i, (nodo, distancia) in enumerate(resultado_cercanos, 1):
+                        datos_cercanos.append({
+                            "Posición": i,
+                            "Nodo": nodo.element()['nombre'],
+                            "ID": nodo.element()['id'],
+                            "Distancia": f"{distancia:.2f} km"
+                        })
+                    
+                    df_cercanos = pd.DataFrame(datos_cercanos)
+                    st.dataframe(df_cercanos, use_container_width=True, hide_index=True)
+                else:
+                    st.warning(f"⚠️ No se encontraron nodos del tipo '{rol_busqueda}'")
+        else:
+            st.info("Selecciona un nodo origen para usar esta herramienta")
+    
+    with col_herr2:
+        st.write("**📊 Estadísticas de Red**")
+        
+        if st.button("📈 Analizar Conectividad"):
+            # Análisis de conectividad desde el nodo origen
+            if nodo_origen:
+                distancias, _ = CalculadorDistancias.dijkstra(grafo, nodo_origen)
+                
+                # Estadísticas de alcance
+                nodos_alcanzables = sum(1 for d in distancias.values() if d != float('inf'))
+                distancia_promedio = sum(d for d in distancias.values() if d != float('inf')) / max(1, nodos_alcanzables - 1)
+                distancia_maxima = max(d for d in distancias.values() if d != float('inf'))
+                
+                col_stat1, col_stat2, col_stat3 = st.columns(3)
+                
+                with col_stat1:
+                    st.metric("Nodos Alcanzables", f"{nodos_alcanzables}/{len(vertices)}")
+                
+                with col_stat2:
+                    st.metric("Distancia Promedio", f"{distancia_promedio:.2f}")
+                
+                with col_stat3:
+                    st.metric("Distancia Máxima", f"{distancia_maxima:.2f}")
+                
+                # Análisis por roles
+                stats_roles = BuscadorNodos.obtener_estadisticas_roles(grafo)
+                st.write("**Distribución por Roles:**")
+                for rol, info in stats_roles.items():
+                    st.write(f"• {rol.title()}: {info['cantidad']} nodos ({info['porcentaje']:.1f}%)")
+            
+            else:
+                st.info("Selecciona un nodo origen para análisis detallado")
+    
+    # === SECCIÓN 6: HISTORIAL DE RUTAS ===
+    if st.session_state.historial_rutas:
+        st.markdown("---")
+        st.subheader("📋 Historial de Rutas Calculadas")
+        
+        # Controles del historial
+        col_hist1, col_hist2 = st.columns([3, 1])
+        
+        with col_hist1:
+            st.write(f"**Total de rutas calculadas:** {len(st.session_state.historial_rutas)}")
+        
+        with col_hist2:
+            if st.button("🗑️ Limpiar Historial"):
+                st.session_state.historial_rutas = []
+                st.rerun()
+        
+        # Tabla del historial
+        datos_historial = []
+        for ruta in reversed(st.session_state.historial_rutas[-10:]):  # Mostrar últimas 10
+            datos_historial.append({
+                "ID": ruta['id'],
+                "Origen": ruta['origen_nombre'],
+                "Destino": ruta['destino_nombre'],
+                "Distancia": f"{ruta['distancia']:.2f} km",
+                "Saltos": ruta['saltos'],
+                "Hora": ruta['timestamp'].strftime("%H:%M:%S")
+            })
+        
+        if datos_historial:
+            st.dataframe(datos_historial, use_container_width=True, hide_index=True)
+
 def mostrar_analisis_detallado():
-    """Muestra análisis detallado del grafo actual"""
+    """Muestra análisis detallado del grafo actual (función original simplificada)"""
     if st.session_state.grafo_actual is None:
         st.warning("⚠️ No hay un grafo generado. Ve a la pestaña 'Simulación' para crear uno.")
         return
@@ -258,7 +734,7 @@ def mostrar_analisis_detallado():
     
     nx_graph = st.session_state.networkx_graph
     
-    # Métricas básicas
+    # Métricas básicas en columnas
     col1, col2 = st.columns([1, 1])
     
     with col1:
@@ -266,24 +742,14 @@ def mostrar_analisis_detallado():
         metricas = NetworkXAdapter.analizar_metricas_red(nx_graph)
         
         if metricas:
-            # Mostrar métricas en una tabla - Convertir todos los valores a string para Arrow
+            # Mostrar métricas en una tabla
             df_metricas = pd.DataFrame([
                 {"Métrica": "Número de Nodos", "Valor": str(metricas.get('num_nodos', 'N/A'))},
                 {"Métrica": "Número de Aristas", "Valor": str(metricas.get('num_aristas', 'N/A'))},
                 {"Métrica": "Densidad", "Valor": f"{metricas.get('densidad', 0):.4f}"},
                 {"Métrica": "Conectado", "Valor": "Sí" if metricas.get('conectado', False) else "No"},
-                {"Métrica": "Componentes Conexas", "Valor": str(metricas.get('num_componentes', 'N/A'))},
                 {"Métrica": "Grado Promedio", "Valor": f"{metricas.get('grado_promedio', 0):.2f}"},
-                {"Métrica": "Grado Máximo", "Valor": str(metricas.get('grado_max', 'N/A'))},
-                {"Métrica": "Grado Mínimo", "Valor": str(metricas.get('grado_min', 'N/A'))},
             ])
-            
-            if metricas.get('conectado', False):
-                df_metricas = pd.concat([df_metricas, pd.DataFrame([
-                    {"Métrica": "Diámetro", "Valor": str(metricas.get('diametro', 'N/A'))},
-                    {"Métrica": "Radio", "Valor": str(metricas.get('radio', 'N/A'))},
-                    {"Métrica": "Clustering Promedio", "Valor": f"{metricas.get('clustering_promedio', 0):.4f}"},
-                ])], ignore_index=True)
             
             st.dataframe(df_metricas, use_container_width=True, hide_index=True)
     
@@ -291,39 +757,6 @@ def mostrar_analisis_detallado():
         st.subheader("📊 Distribución de Grados")
         fig_grados = NetworkXAdapter.crear_grafico_distribucion_grados(nx_graph)
         st.plotly_chart(fig_grados, use_container_width=True)
-    
-    # Visualización del grafo
-    st.subheader("🌐 Visualización Interactiva")
-    
-    # Controles de visualización
-    col_viz1, col_viz2, col_viz3 = st.columns(3)
-    
-    with col_viz1:
-        layout_type = st.selectbox(
-            "Tipo de Layout",
-            ["spring", "circular", "kamada_kawai", "random"],
-            help="Algoritmo de posicionamiento de nodos"
-        )
-    
-    with col_viz2:
-        mostrar_etiquetas = st.checkbox("Mostrar Etiquetas", value=True)
-    
-    with col_viz3:
-        tamaño_figura = st.selectbox("Tamaño", ["Pequeño", "Mediano", "Grande"], index=1)
-    
-    # Crear visualización
-    if len(nx_graph.nodes()) <= 100:  # Limitar visualización para grafos grandes
-        fig_grafo = NetworkXAdapter.crear_visualizacion_plotly(
-            nx_graph, 
-            titulo="Visualización del Grafo Generado"
-        )
-        
-        altura = {"Pequeño": 400, "Mediano": 600, "Grande": 800}[tamaño_figura]
-        fig_grafo.update_layout(height=altura)
-        
-        st.plotly_chart(fig_grafo, use_container_width=True)
-    else:
-        st.warning("⚠️ Grafo demasiado grande para visualización interactiva (>100 nodos)")
     
     # Análisis por roles
     st.subheader("👥 Análisis por Roles")
@@ -340,606 +773,10 @@ def mostrar_analisis_detallado():
                     "Cantidad": info['cantidad'],
                     "Porcentaje": f"{info['porcentaje']:.1f}%",
                     "Grado Promedio": f"{info['grado_promedio']:.2f}",
-                    "Grado Máximo": info['grado_maximo'],
-                    "Grado Mínimo": info['grado_minimo']
                 })
             
             df_roles = pd.DataFrame(datos_roles)
             st.dataframe(df_roles, use_container_width=True, hide_index=True)
-
-def mostrar_analisis_rutas():
-    """Muestra herramientas de análisis de rutas"""
-    if st.session_state.grafo_actual is None:
-        st.warning("⚠️ No hay un grafo generado. Ve a la pestaña 'Simulación' para crear uno.")
-        return
-    
-    st.header("🗺️ Análisis de Rutas")
-    
-    grafo = st.session_state.grafo_actual
-    
-    # Herramientas de búsqueda de rutas
-    st.subheader("🔍 Búsqueda de Rutas")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.write("**Seleccionar Nodo Origen**")
-        vertices = list(grafo.vertices())
-        opciones_origen = [f"ID {v.element()['id']} - {v.element()['nombre']}" for v in vertices]
-        
-        idx_origen = st.selectbox("Nodo Origen", range(len(opciones_origen)), 
-                                 format_func=lambda x: opciones_origen[x])
-        nodo_origen = vertices[idx_origen]
-    
-    with col2:
-        st.write("**Seleccionar Nodo Destino**")
-        opciones_destino = [f"ID {v.element()['id']} - {v.element()['nombre']}" for v in vertices]
-        
-        idx_destino = st.selectbox("Nodo Destino", range(len(opciones_destino)), 
-                                  format_func=lambda x: opciones_destino[x])
-        nodo_destino = vertices[idx_destino]
-    
-    # Calcular ruta más corta
-    if st.button("🗺️ Calcular Ruta Más Corta"):
-        if nodo_origen != nodo_destino:
-            resultado = CalculadorDistancias.encontrar_camino_mas_corto(grafo, nodo_origen, nodo_destino)
-            
-            if resultado:
-                camino, distancia = resultado
-                
-                # Mostrar información de la ruta
-                st.success(f"✅ Ruta encontrada - Distancia: {distancia:.2f}")
-                
-                # Crear información de la ruta
-                nombres_camino = [v.element()['nombre'] for v in camino]
-                st.write(f"**Camino:** {' → '.join(nombres_camino)}")
-                st.write(f"**Número de saltos:** {len(camino) - 1}")
-                
-                # Guardar ruta en AVL
-                ruta_id = f"ruta_{nodo_origen.element()['id']}_{nodo_destino.element()['id']}"
-                ruta_info = RutaInfo(
-                    ruta_id=ruta_id,
-                    origen=nodo_origen.element()['nombre'],
-                    destino=nodo_destino.element()['nombre'],
-                    camino=[v.element()['nombre'] for v in camino],
-                    distancia=distancia,
-                    frecuencia_uso=1,
-                    ultimo_uso=datetime.now(),
-                    tiempo_promedio=0.0,
-                    metadatos={"creado_en": "dashboard", "tipo": "busqueda_manual"}
-                )
-                
-                st.session_state.avl_rutas.insertar_ruta(ruta_info)
-                st.info("💾 Ruta guardada en el sistema de rutas")
-                
-                # Visualizar ruta si el grafo no es muy grande
-                if st.session_state.networkx_graph and len(st.session_state.networkx_graph.nodes()) <= 50:
-                    ids_camino = [v.element()['id'] for v in camino]
-                    fig_ruta = NetworkXAdapter.resaltar_ruta_en_grafo(
-                        st.session_state.networkx_graph, ids_camino
-                    )
-                    st.plotly_chart(fig_ruta, use_container_width=True)
-                
-            else:
-                st.error("❌ No se encontró una ruta entre los nodos seleccionados")
-        else:
-            st.warning("⚠️ El nodo origen y destino deben ser diferentes")
-    
-    # Búsqueda por roles
-    st.subheader("🎯 Búsqueda por Roles")
-    
-    col_rol1, col_rol2 = st.columns(2)
-    
-    with col_rol1:
-        rol_buscado = st.selectbox(
-            "Rol a Buscar",
-            [RolNodo.ALMACENAMIENTO, RolNodo.RECARGA, RolNodo.CLIENTE],
-            format_func=lambda x: x.title()
-        )
-    
-    with col_rol2:
-        k_cercanos = st.slider("Número de nodos más cercanos", 1, 10, 3)
-    
-    if st.button("🔍 Buscar Nodos Más Cercanos"):
-        resultado_k = BuscadorNodos.buscar_k_nodos_mas_cercanos_por_rol(
-            grafo, nodo_origen, rol_buscado, k_cercanos
-        )
-        
-        if resultado_k:
-            st.success(f"✅ Encontrados {len(resultado_k)} nodos de tipo '{rol_buscado}'")
-            
-            # Mostrar tabla de resultados
-            datos_cercanos = []
-            for i, (nodo, distancia) in enumerate(resultado_k, 1):
-                datos_cercanos.append({
-                    "Posición": i,
-                    "Nodo": nodo.element()['nombre'],
-                    "ID": nodo.element()['id'],
-                    "Distancia": f"{distancia:.2f}"
-                })
-            
-            df_cercanos = pd.DataFrame(datos_cercanos)
-            st.dataframe(df_cercanos, use_container_width=True, hide_index=True)
-            
-        else:
-            st.warning(f"⚠️ No se encontraron nodos del tipo '{rol_buscado}'")
-    
-    # Gestión de rutas guardadas
-    st.subheader("💾 Rutas Guardadas")
-    
-    if not st.session_state.avl_rutas.esta_vacio():
-        rutas_guardadas = st.session_state.avl_rutas.listar_todas_rutas()
-        
-        # Mostrar estadísticas de rutas
-        col_stats1, col_stats2, col_stats3 = st.columns(3)
-        
-        with col_stats1:
-            st.metric("Total Rutas", len(rutas_guardadas))
-        
-        with col_stats2:
-            distancia_promedio = sum(r.distancia for r in rutas_guardadas) / len(rutas_guardadas)
-            st.metric("Distancia Promedio", f"{distancia_promedio:.2f}")
-        
-        with col_stats3:
-            ruta_mas_larga = max(rutas_guardadas, key=lambda r: r.distancia)
-            st.metric("Ruta Más Larga", f"{ruta_mas_larga.distancia:.2f}")
-        
-        # Tabla de rutas
-        datos_rutas = []
-        for ruta in rutas_guardadas:
-            datos_rutas.append({
-                "ID": ruta.ruta_id,
-                "Origen": ruta.origen,
-                "Destino": ruta.destino,
-                "Distancia": f"{ruta.distancia:.2f}",
-                "Saltos": len(ruta.camino) - 1,
-                "Último Uso": ruta.ultimo_uso.strftime("%H:%M:%S")
-            })
-        
-        df_rutas = pd.DataFrame(datos_rutas)
-        st.dataframe(df_rutas, use_container_width=True, hide_index=True)
-        
-        if st.button("🗑️ Limpiar Rutas Guardadas"):
-            st.session_state.avl_rutas = AVLRutas()
-            st.rerun()
-    else:
-        st.info("📝 No hay rutas guardadas. Calcula algunas rutas para verlas aquí.")
-
-def mostrar_historial():
-    """Muestra el historial de simulaciones"""
-    st.header("📈 Historial de Simulaciones")
-    
-    if not st.session_state.historial_simulaciones:
-        st.info("📝 No hay simulaciones en el historial. Ejecuta algunas simulaciones para verlas aquí.")
-        return
-    
-    # Estadísticas del historial
-    st.subheader("📊 Resumen del Historial")
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("Total Simulaciones", len(st.session_state.historial_simulaciones))
-    
-    with col2:
-        nodos_promedio = sum(s['estadisticas']['numero_vertices'] 
-                           for s in st.session_state.historial_simulaciones) / len(st.session_state.historial_simulaciones)
-        st.metric("Nodos Promedio", f"{nodos_promedio:.1f}")
-    
-    with col3:
-        conectadas = sum(1 for s in st.session_state.historial_simulaciones 
-                        if s['estadisticas']['esta_conectado'])
-        pct_conectadas = (conectadas / len(st.session_state.historial_simulaciones)) * 100
-        st.metric("% Conectadas", f"{pct_conectadas:.1f}%")
-    
-    with col4:
-        densidad_promedio = sum(s['estadisticas']['densidad'] 
-                              for s in st.session_state.historial_simulaciones) / len(st.session_state.historial_simulaciones)
-        st.metric("Densidad Promedio", f"{densidad_promedio:.3f}")
-    
-    # Gráficos de tendencias
-    st.subheader("📈 Tendencias")
-    
-    # Preparar datos para gráficos
-    df_historial = []
-    for i, sim in enumerate(st.session_state.historial_simulaciones):
-        df_historial.append({
-            'Simulación': i + 1,
-            'Timestamp': datetime.fromtimestamp(sim['timestamp']),
-            'Nodos': sim['estadisticas']['numero_vertices'],
-            'Aristas': sim['estadisticas']['numero_aristas'],
-            'Densidad': sim['estadisticas']['densidad'],
-            'Conectado': sim['estadisticas']['esta_conectado'],
-            'Prob_Arista': sim['configuracion']['prob_arista'],
-            'Almacenamiento_%': sim['configuracion']['pct_almacenamiento'],
-            'Recarga_%': sim['configuracion']['pct_recarga'],
-            'Cliente_%': sim['configuracion']['pct_cliente']
-        })
-    
-    df = pd.DataFrame(df_historial)
-    
-    # Gráfico de evolución de nodos y aristas
-    fig_evolucion = go.Figure()
-    
-    fig_evolucion.add_trace(go.Scatter(
-        x=df['Simulación'],
-        y=df['Nodos'],
-        mode='lines+markers',
-        name='Nodos',
-        line=dict(color='blue')
-    ))
-    
-    fig_evolucion.add_trace(go.Scatter(
-        x=df['Simulación'],
-        y=df['Aristas'],
-        mode='lines+markers',
-        name='Aristas',
-        yaxis='y2',
-        line=dict(color='red')
-    ))
-    
-    fig_evolucion.update_layout(
-        title="Evolución de Nodos y Aristas",
-        xaxis_title="Número de Simulación",
-        yaxis=dict(title="Nodos", side="left"),
-        yaxis2=dict(title="Aristas", side="right", overlaying="y"),
-        height=400
-    )
-    
-    st.plotly_chart(fig_evolucion, use_container_width=True)
-    
-    # Tabla detallada del historial
-    st.subheader("📋 Detalle del Historial")
-    
-    # Formatear datos para mostrar
-    df_display = df.copy()
-    df_display['Timestamp'] = df_display['Timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
-    df_display['Conectado'] = df_display['Conectado'].map({True: '✅', False: '❌'})
-    df_display['Densidad'] = df_display['Densidad'].round(4)
-    df_display['Prob_Arista'] = df_display['Prob_Arista'].round(3);
-    
-    st.dataframe(
-        df_display[[
-            'Simulación', 'Timestamp', 'Nodos', 'Aristas', 
-            'Densidad', 'Conectado', 'Prob_Arista'
-        ]], 
-        use_container_width=True, 
-        hide_index=True
-    )
-    
-    # Controles del historial
-    st.subheader("🔧 Controles")
-    
-    col_ctrl1, col_ctrl2 = st.columns(2)
-    
-    with col_ctrl1:
-        if st.button("🗑️ Limpiar Historial"):
-            st.session_state.historial_simulaciones = []
-            st.rerun()
-    
-    with col_ctrl2:
-        if st.button("📊 Análisis Comparativo"):
-            st.info("🚧 Función de análisis comparativo en desarrollo")
-
-def mostrar_clientes_y_ordenes():
-    """Muestra información de clientes y órdenes del sistema"""
-    if st.session_state.grafo_actual is None:
-        st.warning("⚠️ No hay un grafo generado. Ve a la pestaña 'Simulación' para crear uno.")
-        return
-    
-    st.header("👥 Clientes y Órdenes del Sistema")
-    
-    # Verificar si hay datos generados
-    if not st.session_state.clientes_actuales and not st.session_state.ordenes_actuales:
-        st.info("📝 No hay datos de clientes y órdenes generados. Los datos se crean automáticamente al ejecutar una simulación.")
-        return
-    
-    # Métricas generales
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric(
-            label="👥 Total Clientes",
-            value=len(st.session_state.clientes_actuales),
-            help="Número total de clientes en el sistema"
-        )
-    
-    with col2:
-        clientes_activos = len([c for c in st.session_state.clientes_actuales if c.estado == EstadoCliente.ACTIVO])
-        st.metric(
-            label="✅ Clientes Activos",
-            value=clientes_activos,
-            help="Clientes con estado activo"
-        )
-    
-    with col3:
-        st.metric(
-            label="📋 Total Órdenes",
-            value=len(st.session_state.ordenes_actuales),
-            help="Número total de órdenes en el sistema"
-        )
-    
-    with col4:
-        if st.session_state.ordenes_actuales:
-            valor_total = sum(orden.costo_total for orden in st.session_state.ordenes_actuales)
-            st.metric(
-                label="💰 Valor Total",
-                value=f"${valor_total:,.2f}",
-                help="Valor total de todas las órdenes"
-            )
-    
-    # Pestañas secundarias
-    tab_clientes, tab_ordenes = st.tabs(["👥 Clientes", "📋 Órdenes"])
-    
-    # PESTAÑA CLIENTES
-    with tab_clientes:
-        st.subheader("📊 Lista de Clientes")
-        
-        if st.session_state.clientes_actuales:
-            # Filtros para clientes
-            col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
-            
-            with col_filtro1:
-                filtro_tipo = st.selectbox(
-                    "Filtrar por Tipo",
-                    ["Todos"] + [tipo.value for tipo in TipoCliente],
-                    key="filtro_tipo_cliente"
-                )
-            
-            with col_filtro2:
-                filtro_estado = st.selectbox(
-                    "Filtrar por Estado",
-                    ["Todos"] + [estado.value for estado in EstadoCliente],
-                    key="filtro_estado_cliente"
-                )
-            
-            with col_filtro3:
-                ordenar_por = st.selectbox(
-                    "Ordenar por",
-                    ["Nombre", "Total Pedidos", "Total Gastado", "Fecha Registro"],
-                    key="ordenar_clientes"
-                )
-            
-            # Aplicar filtros
-            clientes_filtrados = st.session_state.clientes_actuales.copy()
-            
-            if filtro_tipo != "Todos":
-                clientes_filtrados = [c for c in clientes_filtrados if c.tipo.value == filtro_tipo]
-            
-            if filtro_estado != "Todos":
-                clientes_filtrados = [c for c in clientes_filtrados if c.estado.value == filtro_estado]
-            
-            # Ordenar
-            if ordenar_por == "Nombre":
-                clientes_filtrados.sort(key=lambda c: c.nombre)
-            elif ordenar_por == "Total Pedidos":
-                clientes_filtrados.sort(key=lambda c: c.total_pedidos, reverse=True)
-            elif ordenar_por == "Total Gastado":
-                clientes_filtrados.sort(key=lambda c: c.total_gastado, reverse=True)
-            elif ordenar_por == "Fecha Registro":
-                clientes_filtrados.sort(key=lambda c: c.fecha_registro, reverse=True)
-            
-            # Mostrar resumen de filtros
-            st.write(f"**Mostrando {len(clientes_filtrados)} de {len(st.session_state.clientes_actuales)} clientes**")
-            
-            # Preparar datos para mostrar
-            datos_clientes = []
-            for cliente in clientes_filtrados:
-                resumen = cliente.obtener_resumen()
-                datos_clientes.append({
-                    "ID": resumen['cliente_id'],
-                    "Nombre": resumen['nombre'],
-                    "Tipo": resumen['tipo'].title(),
-                    "Estado": resumen['estado'].title(),
-                    "Ubicación": resumen['nodo_ubicacion'],
-                    "Total Pedidos": resumen['total_pedidos'],
-                    "Completados": resumen['pedidos_completados'],
-                    "Cancelados": resumen['pedidos_cancelados'],
-                    "Total Gastado": f"${resumen['total_gastado']:,.2f}",
-                    "Promedio Pedido": f"${resumen['promedio_valor_pedido']:,.2f}",
-                    "Tasa Éxito": f"{resumen['tasa_completado']:.1f}%",
-                    "Límite Crédito": f"${resumen['limite_credito']:,.2f}",
-                    "Email": resumen['email'],
-                    "Teléfono": resumen['telefono']
-                })
-            
-            # Mostrar tabla de clientes
-            if datos_clientes:
-                st.dataframe(
-                    datos_clientes,
-                    use_container_width=True,
-                    hide_index=True
-                )
-                
-                # Sección de detalles en JSON
-                st.subheader("📄 Detalles Completos de Clientes")
-                
-                # Selector de cliente para mostrar detalles
-                nombres_clientes = [f"{c.cliente_id} - {c.nombre}" for c in clientes_filtrados]
-                if nombres_clientes:
-                    cliente_seleccionado_idx = st.selectbox(
-                        "Seleccionar cliente para ver detalles:",
-                        range(len(nombres_clientes)),
-                        format_func=lambda x: nombres_clientes[x],
-                        key="selector_cliente_detalle"
-                    )
-                    
-                    if cliente_seleccionado_idx is not None:
-                        cliente_detalle = clientes_filtrados[cliente_seleccionado_idx]
-                        st.json(cliente_detalle.obtener_resumen())
-            else:
-                st.info("No hay clientes que coincidan con los filtros seleccionados.")
-        
-        else:
-            st.info("📝 No hay clientes generados.")
-    
-    # PESTAÑA ÓRDENES
-    with tab_ordenes:
-        st.subheader("📋 Lista de Órdenes")
-        
-        if st.session_state.ordenes_actuales:
-            # Filtros para órdenes
-            col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
-            
-            with col_filtro1:
-                filtro_estado_orden = st.selectbox(
-                    "Filtrar por Estado",
-                    ["Todos"] + [estado.value for estado in EstadoOrden],
-                    key="filtro_estado_orden"
-                )
-            
-            with col_filtro2:
-                filtro_prioridad = st.selectbox(
-                    "Filtrar por Prioridad",
-                    ["Todas"] + [f"{p.value} ({p.name})" for p in PrioridadOrden],
-                    key="filtro_prioridad_orden"
-                )
-            
-            with col_filtro3:
-                ordenar_ordenes_por = st.selectbox(
-                    "Ordenar por",
-                    ["Fecha Creación", "Valor Total", "Prioridad", "Estado"],
-                    key="ordenar_ordenes"
-                )
-            
-            # Aplicar filtros
-            ordenes_filtradas = st.session_state.ordenes_actuales.copy()
-            
-            if filtro_estado_orden != "Todos":
-                ordenes_filtradas = [o for o in ordenes_filtradas if o.estado.value == filtro_estado_orden]
-            
-            if filtro_prioridad != "Todas":
-                prioridad_numero = filtro_prioridad.split(" (")[1].replace(")", "")
-                ordenes_filtradas = [o for o in ordenes_filtradas if o.prioridad.name == prioridad_numero]
-            
-            # Ordenar
-            if ordenar_ordenes_por == "Fecha Creación":
-                ordenes_filtradas.sort(key=lambda o: o.fecha_creacion, reverse=True)
-            elif ordenar_ordenes_por == "Valor Total":
-                ordenes_filtradas.sort(key=lambda o: o.costo_total, reverse=True)
-            elif ordenar_ordenes_por == "Prioridad":
-                ordenes_filtradas.sort(key=lambda o: o.prioridad.value, reverse=True)
-            elif ordenar_ordenes_por == "Estado":
-                ordenes_filtradas.sort(key=lambda o: o.estado.value)
-            
-            # Mostrar resumen de filtros
-            st.write(f"**Mostrando {len(ordenes_filtradas)} de {len(st.session_state.ordenes_actuales)} órdenes**")
-            
-            # Preparar datos para mostrar
-            datos_ordenes = []
-            for orden in ordenes_filtradas:
-                resumen = orden.obtener_resumen()
-                
-                # Formatear estado con emoji
-                estado_emoji = {
-                    "pendiente": "⏳",
-                    "confirmada": "✅",
-                    "en_preparacion": "📦",
-                    "en_transito": "🚚",
-                    "entregada": "✅",
-                    "cancelada": "❌",
-                    "devuelta": "↩️"
-                }
-                
-                estado_formato = f"{estado_emoji.get(resumen['estado'], '❓')} {resumen['estado'].title()}"
-                
-                # Formatear prioridad con color
-                prioridad_emoji = {
-                    1: "🟢",  # Baja
-                    2: "🟡",  # Media
-                    3: "🟠",  # Alta
-                    4: "🔴"   # Crítica
-                }
-                
-                prioridad_formato = f"{prioridad_emoji.get(resumen['prioridad'], '⚪')} {PrioridadOrden(resumen['prioridad']).name.title()}"
-                
-                datos_ordenes.append({
-                    "ID": resumen['orden_id'],
-                    "Cliente ID": resumen['cliente_id'],
-                    "Tipo": resumen['tipo'].title(),
-                    "Estado": estado_formato,
-                    "Prioridad": prioridad_formato,
-                    "Origen": resumen['nodo_origen'],
-                    "Destino": resumen['nodo_destino'],
-                    "Descripción": resumen['descripcion'],
-                    "Valor Base": f"${resumen['valor_base']:,.2f}",
-                    "Costo Envío": f"${resumen['costo_envio']:,.2f}",
-                    "Costo Total": f"${resumen['costo_total']:,.2f}",
-                    "Peso (kg)": resumen['peso_kg'],
-                    "Fecha Creación": datetime.fromisoformat(resumen['fecha_creacion']).strftime("%Y-%m-%d %H:%M"),
-                    "Entrega Solicitada": datetime.fromisoformat(resumen['fecha_entrega_solicitada']).strftime("%Y-%m-%d"),
-                    "Vencida": "🔴 Sí" if resumen['esta_vencida'] else "🟢 No",
-                    "Tiempo Transcurrido": f"{resumen['tiempo_transcurrido_total']:.1f}h"
-                })
-            
-            # Mostrar tabla de órdenes
-            if datos_ordenes:
-                st.dataframe(
-                    datos_ordenes,
-                    use_container_width=True,
-                    hide_index=True
-                )
-                
-                # Estadísticas adicionales
-                st.subheader("📊 Estadísticas de Órdenes")
-                
-                col_stats1, col_stats2, col_stats3 = st.columns(3)
-                
-                with col_stats1:
-                    # Distribución por estado
-                    distribucion_estado = {}
-                    for orden in ordenes_filtradas:
-                        estado = orden.estado.value
-                        distribucion_estado[estado] = distribucion_estado.get(estado, 0) + 1
-                    
-                    st.write("**Por Estado:**")
-                    for estado, cantidad in distribucion_estado.items():
-                        st.write(f"• {estado.title()}: {cantidad}")
-                
-                with col_stats2:
-                    # Distribución por prioridad
-                    distribucion_prioridad = {}
-                    for orden in ordenes_filtradas:
-                        prioridad = PrioridadOrden(orden.prioridad.value).name
-                        distribucion_prioridad[prioridad] = distribucion_prioridad.get(prioridad, 0) + 1
-                    
-                    st.write("**Por Prioridad:**")
-                    for prioridad, cantidad in distribucion_prioridad.items():
-                        st.write(f"• {prioridad.title()}: {cantidad}")
-                
-                with col_stats3:
-                    # Métricas financieras
-                    if ordenes_filtradas:
-                        valor_promedio = sum(o.costo_total for o in ordenes_filtradas) / len(ordenes_filtradas)
-                        orden_max_valor = max(ordenes_filtradas, key=lambda o: o.costo_total)
-                        
-                        st.write("**Métricas Financieras:**")
-                        st.write(f"• Valor Promedio: ${valor_promedio:,.2f}")
-                        st.write(f"• Orden Máxima: ${orden_max_valor.costo_total:,.2f}")
-                
-                # Sección de detalles en JSON
-                st.subheader("📄 Detalles Completos de Órdenes")
-                
-                # Selector de orden para mostrar detalles
-                nombres_ordenes = [f"{o.orden_id} - {o.descripcion}" for o in ordenes_filtradas]
-                if nombres_ordenes:
-                    orden_seleccionada_idx = st.selectbox(
-                        "Seleccionar orden para ver detalles:",
-                        range(len(nombres_ordenes)),
-                        format_func=lambda x: nombres_ordenes[x],
-                        key="selector_orden_detalle"
-                    )
-                    
-                    if orden_seleccionada_idx is not None:
-                        orden_detalle = ordenes_filtradas[orden_seleccionada_idx]
-                        st.json(orden_detalle.obtener_resumen())
-            else:
-                st.info("No hay órdenes que coincidan con los filtros seleccionados.")
-        
-        else:
-            st.info("📝 No hay órdenes generadas.")
-
-# ...existing code...
 
 def main():
     """Función principal del dashboard"""
@@ -998,8 +835,8 @@ def main():
     # Pestañas principales
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "🚀 Simulación", 
-        "📊 Análisis", 
-        "👥 Clients & Orders",
+        "🌐 Exploración de Red", 
+        "👥 Clientes & Órdenes",
         "🗺️ Rutas", 
         "📈 Historial"
     ])
@@ -1175,9 +1012,9 @@ def main():
             st.subheader("📊 Simulación Actual")
             mostrar_metricas_principales(st.session_state.estadisticas_actuales)
 
-    # PESTAÑA 2: ANÁLISIS
+    # PESTAÑA 2: EXPLORACIÓN DE RED
     with tab2:
-        mostrar_analisis_detallado()
+        mostrar_exploracion_red()
 
     # PESTAÑA 3: CLIENTES Y ÓRDENES
     with tab3:
