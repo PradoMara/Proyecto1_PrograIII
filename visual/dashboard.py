@@ -266,22 +266,22 @@ def mostrar_analisis_detallado():
         metricas = NetworkXAdapter.analizar_metricas_red(nx_graph)
         
         if metricas:
-            # Mostrar métricas en una tabla
+            # Mostrar métricas en una tabla - Convertir todos los valores a string para Arrow
             df_metricas = pd.DataFrame([
-                {"Métrica": "Número de Nodos", "Valor": metricas.get('num_nodos', 'N/A')},
-                {"Métrica": "Número de Aristas", "Valor": metricas.get('num_aristas', 'N/A')},
+                {"Métrica": "Número de Nodos", "Valor": str(metricas.get('num_nodos', 'N/A'))},
+                {"Métrica": "Número de Aristas", "Valor": str(metricas.get('num_aristas', 'N/A'))},
                 {"Métrica": "Densidad", "Valor": f"{metricas.get('densidad', 0):.4f}"},
                 {"Métrica": "Conectado", "Valor": "Sí" if metricas.get('conectado', False) else "No"},
-                {"Métrica": "Componentes Conexas", "Valor": metricas.get('num_componentes', 'N/A')},
+                {"Métrica": "Componentes Conexas", "Valor": str(metricas.get('num_componentes', 'N/A'))},
                 {"Métrica": "Grado Promedio", "Valor": f"{metricas.get('grado_promedio', 0):.2f}"},
-                {"Métrica": "Grado Máximo", "Valor": metricas.get('grado_max', 'N/A')},
-                {"Métrica": "Grado Mínimo", "Valor": metricas.get('grado_min', 'N/A')},
+                {"Métrica": "Grado Máximo", "Valor": str(metricas.get('grado_max', 'N/A'))},
+                {"Métrica": "Grado Mínimo", "Valor": str(metricas.get('grado_min', 'N/A'))},
             ])
             
             if metricas.get('conectado', False):
                 df_metricas = pd.concat([df_metricas, pd.DataFrame([
-                    {"Métrica": "Diámetro", "Valor": metricas.get('diametro', 'N/A')},
-                    {"Métrica": "Radio", "Valor": metricas.get('radio', 'N/A')},
+                    {"Métrica": "Diámetro", "Valor": str(metricas.get('diametro', 'N/A'))},
+                    {"Métrica": "Radio", "Valor": str(metricas.get('radio', 'N/A'))},
                     {"Métrica": "Clustering Promedio", "Valor": f"{metricas.get('clustering_promedio', 0):.4f}"},
                 ])], ignore_index=True)
             
@@ -402,7 +402,11 @@ def mostrar_analisis_rutas():
                     origen=nodo_origen.element()['nombre'],
                     destino=nodo_destino.element()['nombre'],
                     camino=[v.element()['nombre'] for v in camino],
-                    distancia=distancia
+                    distancia=distancia,
+                    frecuencia_uso=1,
+                    ultimo_uso=datetime.now(),
+                    tiempo_promedio=0.0,
+                    metadatos={"creado_en": "dashboard", "tipo": "busqueda_manual"}
                 )
                 
                 st.session_state.avl_rutas.insertar_ruta(ruta_info)
