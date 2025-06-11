@@ -183,10 +183,15 @@ class EstacionRecarga:
         
         # Cambiar estado del dron de vuelta a disponible
         dron.cambiar_estado(EstadoDron.DISPONIBLE)
-        
-        # Calcular métricas finales
+          # Calcular métricas finales
         energia_suministrada = cantidad_cargada / 1000.0  # Convertir a kWh
-        costo_real = self.calcular_costo_carga(dron, info_carga['tipo_recarga'], porcentaje_real)
+        
+        # Calcular costo usando la información original de la carga
+        porcentaje_inicial = info_carga['porcentaje_inicial']
+        objetivo_porcentaje = info_carga['objetivo_porcentaje']
+        energia_teorica_necesaria = (objetivo_porcentaje - porcentaje_inicial) / 100.0 * (dron.bateria_maxima / 1000.0)
+        config = self.configuracion_recarga[info_carga['tipo_recarga']]
+        costo_real = energia_teorica_necesaria * self.costo_por_kwh * config["multiplicador_costo"]
         
         # Actualizar estadísticas de la estación
         self.total_cargas_realizadas += 1

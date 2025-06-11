@@ -125,15 +125,14 @@ class TestEstacionRecarga(unittest.TestCase):
         # Carga normal
         costo_normal = self.estacion.calcular_costo_carga(self.dron1, TipoRecarga.NORMAL)
         self.assertGreater(costo_normal, 0)
-        
-        # Carga rápida debe ser más cara
+          # Carga rápida debe ser más cara
         costo_rapido = self.estacion.calcular_costo_carga(self.dron1, TipoRecarga.RAPIDA)
         self.assertGreater(costo_rapido, costo_normal)
         
-        # Dron con menos batería debe costar menos cargar
+        # Dron con menos batería debe costar más cargar (necesita más energía)
         costo_bateria_baja = self.estacion.calcular_costo_carga(self.dron2, TipoRecarga.NORMAL)
         costo_bateria_alta = self.estacion.calcular_costo_carga(self.dron1, TipoRecarga.NORMAL)
-        self.assertGreater(costo_bateria_alta, costo_bateria_baja)
+        self.assertGreater(costo_bateria_baja, costo_bateria_alta)
     
     def test_iniciar_carga_exitosa(self):
         """Prueba inicio exitoso de carga"""

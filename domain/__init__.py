@@ -13,6 +13,12 @@ from .route import (
 # Importar clases relacionadas con drones
 from .drone import Dron, EstadoDron
 
+# Importar clases relacionadas con estaciones de recarga
+from .charging_station import EstacionRecarga, EstadoEstacion, TipoRecarga
+
+# Importar clases relacionadas con validación de rutas por batería
+from .battery_route_validator import ValidadorRutasPorBateria, SegmentoRuta, ResultadoValidacion
+
 __all__ = [
     'RutaInfo',
     'NodoAVLRuta', 
@@ -23,5 +29,11 @@ __all__ = [
     'agrupar_rutas_por_origen_destino',
     'calcular_estadisticas_rutas',
     'Dron',
-    'EstadoDron'
+    'EstadoDron',
+    'EstacionRecarga',
+    'EstadoEstacion',
+    'TipoRecarga',
+    'ValidadorRutasPorBateria',
+    'SegmentoRuta',
+    'ResultadoValidacion'
 ]
