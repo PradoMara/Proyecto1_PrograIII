@@ -187,9 +187,7 @@ class EstacionRecarga:
         energia_suministrada = cantidad_cargada / 1000.0  # Convertir a kWh
         
         # Calcular costo usando la información original de la carga
-        porcentaje_inicial = info_carga['porcentaje_inicial']
-        objetivo_porcentaje = info_carga['objetivo_porcentaje']
-        energia_teorica_necesaria = (objetivo_porcentaje - porcentaje_inicial) / 100.0 * (dron.bateria_maxima / 1000.0)
+        energia_teorica_necesaria = (porcentaje_objetivo - porcentaje_inicial) / 100.0 * (dron.bateria_maxima / 1000.0)
         config = self.configuracion_recarga[info_carga['tipo_recarga']]
         costo_real = energia_teorica_necesaria * self.costo_por_kwh * config["multiplicador_costo"]
         
@@ -245,10 +243,22 @@ class EstacionRecarga:
         return False
     
     def _procesar_cola_espera(self) -> None:
+        """Procesa la cola de espera cuando hay espacio disponible"""
         while self.tiene_espacio() and self.cola_espera:
-            # Nota: Necesitaríamos acceso al dron desde el ID para iniciar carga
-            # Por ahora solo removemos de la cola
-            self.cola_espera.pop(0)
+            # Tomar el primer dron de la cola
+            dron_id = self.cola_espera.pop(0)
+            
+            # Nota: En una implementación real, necesitaríamos acceso al dron
+            # desde su ID. Por ahora, solo registramos que se procesó
+            # y actualizamos las métricas de la estación
+            
+            # Actualizar estadísticas
+            self.ultima_actualizacion = datetime.now()
+            
+            # En una implementación completa, aquí se llamaría:
+            # dron = obtener_dron_por_id(dron_id)
+            # if dron and self.iniciar_carga(dron):
+            #     break  # Solo procesar uno a la vez
     
     def cambiar_estado(self, nuevo_estado: EstadoEstacion) -> bool:
         # Validaciones de transiciones de estado

@@ -129,9 +129,23 @@ class Dron:
             self.bateria_actual = nueva_bateria
             if cantidad > 0:
                 self.ciclos_carga += 1
-        
-        self.ultima_actualizacion = datetime.now()
+                self.ultima_actualizacion = datetime.now()
         return self.bateria_actual - bateria_inicial
+    
+    def reducir_bateria_porcentaje(self, porcentaje: float) -> bool:
+        if not (0 <= porcentaje <= 100):
+            return False
+            
+        cantidad_reducir = (porcentaje / 100.0) * self.bateria_maxima
+        if self.bateria_actual >= cantidad_reducir:
+            self.bateria_actual -= cantidad_reducir
+            self.ultima_actualizacion = datetime.now()
+            return True
+        else:
+            # Reducir hasta cero si no hay suficiente
+            self.bateria_actual = 0
+            self.ultima_actualizacion = datetime.now()
+            return False
     
     def calcular_tiempo_carga_necesario(self, objetivo_porcentaje: float = 100.0) -> float:
         # Calcula el tiempo necesario para cargar hasta un porcentaje objetivo.

@@ -19,6 +19,9 @@ from .charging_station import EstacionRecarga, EstadoEstacion, TipoRecarga
 # Importar clases relacionadas con validación de rutas por batería
 from .battery_route_validator import ValidadorRutasPorBateria, SegmentoRuta, ResultadoValidacion
 
+# Importar clases relacionadas con el algoritmo BFS modificado
+from .bfs_battery_pathfinder import BFSBatteryPathfinder, EstrategiaBusqueda, EstadoNodo, ResultadoBFS
+
 __all__ = [
     'RutaInfo',
     'NodoAVLRuta', 
@@ -35,5 +38,9 @@ __all__ = [
     'TipoRecarga',
     'ValidadorRutasPorBateria',
     'SegmentoRuta',
-    'ResultadoValidacion'
+    'ResultadoValidacion',
+    'BFSBatteryPathfinder',
+    'EstrategiaBusqueda',
+    'EstadoNodo',
+    'ResultadoBFS'
 ]
