@@ -208,25 +208,25 @@ class NetworkXAdapter:
         )
         
         # Crear figura
-        fig = go.Figure(data=[edge_trace, node_trace],
-                       layout=go.Layout(
-                           title=titulo,
-                           titlefont_size=16,
-                           showlegend=False,
-                           hovermode='closest',
-                           margin=dict(b=20,l=5,r=5,t=40),
-                           annotations=[ dict(
-                               text="Arrastra para mover | Zoom con rueda del mouse",
-                               showarrow=False,
-                               xref="paper", yref="paper",
-                               x=0.005, y=-0.002,
-                               xanchor='left', yanchor='bottom',
-                               font=dict(size=12, color="#888")
-                           )],
-                           xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                           yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                           plot_bgcolor='white'
-                       ))
+        fig = go.Figure(data=[edge_trace, node_trace])
+        
+        fig.update_layout(
+            title=dict(text=titulo, font=dict(size=16)),
+            showlegend=False,
+            hovermode='closest',
+            margin=dict(b=20, l=5, r=5, t=40),
+            annotations=[dict(
+                text="Arrastra para mover | Zoom con rueda del mouse",
+                showarrow=False,
+                xref="paper", yref="paper",
+                x=0.005, y=-0.002,
+                xanchor='left', yanchor='bottom',
+                font=dict(size=12, color="#888")
+            )],
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            plot_bgcolor='white'
+        )
         
         return fig
     

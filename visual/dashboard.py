@@ -26,6 +26,9 @@ from model import ConsultorGrafo, CalculadorDistancias, BuscadorNodos
 from visual.networkx_adapter import NetworkXAdapter
 from tda.avl_rutas import AVLRutas
 from domain.route import RutaInfo
+from sim.generador_datos import GeneradorDatosSimulacion
+from domain.client import Cliente, TipoCliente, EstadoCliente
+from domain.order import Orden, TipoOrden, PrioridadOrden, EstadoOrden
 
 # Configuración de la página
 st.set_page_config(
@@ -49,6 +52,12 @@ class SimulacionState:
             st.session_state.historial_simulaciones = []
         if 'networkx_graph' not in st.session_state:
             st.session_state.networkx_graph = None
+        if 'clientes_actuales' not in st.session_state:
+            st.session_state.clientes_actuales = []
+        if 'ordenes_actuales' not in st.session_state:
+            st.session_state.ordenes_actuales = []
+        if 'generador_datos' not in st.session_state:
+            st.session_state.generador_datos = GeneradorDatosSimulacion()
 
     @staticmethod
     def limpiar_estado():
@@ -57,6 +66,8 @@ class SimulacionState:
         st.session_state.estadisticas_actuales = None
         st.session_state.avl_rutas = AVLRutas()
         st.session_state.networkx_graph = None
+        st.session_state.clientes_actuales = []
+        st.session_state.ordenes_actuales = []
 
     @staticmethod
     def agregar_al_historial(config: Dict, stats: Dict):
@@ -215,10 +226,18 @@ def ejecutar_simulacion(config: Dict) -> Tuple[bool, Optional[Dict], Optional[st
         # Convertir a NetworkX para visualización
         nx_graph = NetworkXAdapter.convertir_a_networkx(grafo)
         
+        # Generar datos de simulación (clientes y órdenes)
+        if config.get('semilla'):
+            st.session_state.generador_datos = GeneradorDatosSimulacion(config['semilla'])
+        
+        clientes, ordenes = st.session_state.generador_datos.generar_datos_completos(grafo)
+        
         # Guardar en session state
         st.session_state.grafo_actual = grafo
         st.session_state.estadisticas_actuales = stats
         st.session_state.networkx_graph = nx_graph
+        st.session_state.clientes_actuales = clientes
+        st.session_state.ordenes_actuales = ordenes
         
         return True, stats, None
         
@@ -573,7 +592,7 @@ def mostrar_historial():
     df_display['Timestamp'] = df_display['Timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
     df_display['Conectado'] = df_display['Conectado'].map({True: '✅', False: '❌'})
     df_display['Densidad'] = df_display['Densidad'].round(4)
-    df_display['Prob_Arista'] = df_display['Prob_Arista'].round(3)
+    df_display['Prob_Arista'] = df_display['Prob_Arista'].round(3);
     
     st.dataframe(
         df_display[[
@@ -597,6 +616,326 @@ def mostrar_historial():
     with col_ctrl2:
         if st.button("📊 Análisis Comparativo"):
             st.info("🚧 Función de análisis comparativo en desarrollo")
+
+def mostrar_clientes_y_ordenes():
+    """Muestra información de clientes y órdenes del sistema"""
+    if st.session_state.grafo_actual is None:
+        st.warning("⚠️ No hay un grafo generado. Ve a la pestaña 'Simulación' para crear uno.")
+        return
+    
+    st.header("👥 Clientes y Órdenes del Sistema")
+    
+    # Verificar si hay datos generados
+    if not st.session_state.clientes_actuales and not st.session_state.ordenes_actuales:
+        st.info("📝 No hay datos de clientes y órdenes generados. Los datos se crean automáticamente al ejecutar una simulación.")
+        return
+    
+    # Métricas generales
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric(
+            label="👥 Total Clientes",
+            value=len(st.session_state.clientes_actuales),
+            help="Número total de clientes en el sistema"
+        )
+    
+    with col2:
+        clientes_activos = len([c for c in st.session_state.clientes_actuales if c.estado == EstadoCliente.ACTIVO])
+        st.metric(
+            label="✅ Clientes Activos",
+            value=clientes_activos,
+            help="Clientes con estado activo"
+        )
+    
+    with col3:
+        st.metric(
+            label="📋 Total Órdenes",
+            value=len(st.session_state.ordenes_actuales),
+            help="Número total de órdenes en el sistema"
+        )
+    
+    with col4:
+        if st.session_state.ordenes_actuales:
+            valor_total = sum(orden.costo_total for orden in st.session_state.ordenes_actuales)
+            st.metric(
+                label="💰 Valor Total",
+                value=f"${valor_total:,.2f}",
+                help="Valor total de todas las órdenes"
+            )
+    
+    # Pestañas secundarias
+    tab_clientes, tab_ordenes = st.tabs(["👥 Clientes", "📋 Órdenes"])
+    
+    # PESTAÑA CLIENTES
+    with tab_clientes:
+        st.subheader("📊 Lista de Clientes")
+        
+        if st.session_state.clientes_actuales:
+            # Filtros para clientes
+            col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
+            
+            with col_filtro1:
+                filtro_tipo = st.selectbox(
+                    "Filtrar por Tipo",
+                    ["Todos"] + [tipo.value for tipo in TipoCliente],
+                    key="filtro_tipo_cliente"
+                )
+            
+            with col_filtro2:
+                filtro_estado = st.selectbox(
+                    "Filtrar por Estado",
+                    ["Todos"] + [estado.value for estado in EstadoCliente],
+                    key="filtro_estado_cliente"
+                )
+            
+            with col_filtro3:
+                ordenar_por = st.selectbox(
+                    "Ordenar por",
+                    ["Nombre", "Total Pedidos", "Total Gastado", "Fecha Registro"],
+                    key="ordenar_clientes"
+                )
+            
+            # Aplicar filtros
+            clientes_filtrados = st.session_state.clientes_actuales.copy()
+            
+            if filtro_tipo != "Todos":
+                clientes_filtrados = [c for c in clientes_filtrados if c.tipo.value == filtro_tipo]
+            
+            if filtro_estado != "Todos":
+                clientes_filtrados = [c for c in clientes_filtrados if c.estado.value == filtro_estado]
+            
+            # Ordenar
+            if ordenar_por == "Nombre":
+                clientes_filtrados.sort(key=lambda c: c.nombre)
+            elif ordenar_por == "Total Pedidos":
+                clientes_filtrados.sort(key=lambda c: c.total_pedidos, reverse=True)
+            elif ordenar_por == "Total Gastado":
+                clientes_filtrados.sort(key=lambda c: c.total_gastado, reverse=True)
+            elif ordenar_por == "Fecha Registro":
+                clientes_filtrados.sort(key=lambda c: c.fecha_registro, reverse=True)
+            
+            # Mostrar resumen de filtros
+            st.write(f"**Mostrando {len(clientes_filtrados)} de {len(st.session_state.clientes_actuales)} clientes**")
+            
+            # Preparar datos para mostrar
+            datos_clientes = []
+            for cliente in clientes_filtrados:
+                resumen = cliente.obtener_resumen()
+                datos_clientes.append({
+                    "ID": resumen['cliente_id'],
+                    "Nombre": resumen['nombre'],
+                    "Tipo": resumen['tipo'].title(),
+                    "Estado": resumen['estado'].title(),
+                    "Ubicación": resumen['nodo_ubicacion'],
+                    "Total Pedidos": resumen['total_pedidos'],
+                    "Completados": resumen['pedidos_completados'],
+                    "Cancelados": resumen['pedidos_cancelados'],
+                    "Total Gastado": f"${resumen['total_gastado']:,.2f}",
+                    "Promedio Pedido": f"${resumen['promedio_valor_pedido']:,.2f}",
+                    "Tasa Éxito": f"{resumen['tasa_completado']:.1f}%",
+                    "Límite Crédito": f"${resumen['limite_credito']:,.2f}",
+                    "Email": resumen['email'],
+                    "Teléfono": resumen['telefono']
+                })
+            
+            # Mostrar tabla de clientes
+            if datos_clientes:
+                st.dataframe(
+                    datos_clientes,
+                    use_container_width=True,
+                    hide_index=True
+                )
+                
+                # Sección de detalles en JSON
+                st.subheader("📄 Detalles Completos de Clientes")
+                
+                # Selector de cliente para mostrar detalles
+                nombres_clientes = [f"{c.cliente_id} - {c.nombre}" for c in clientes_filtrados]
+                if nombres_clientes:
+                    cliente_seleccionado_idx = st.selectbox(
+                        "Seleccionar cliente para ver detalles:",
+                        range(len(nombres_clientes)),
+                        format_func=lambda x: nombres_clientes[x],
+                        key="selector_cliente_detalle"
+                    )
+                    
+                    if cliente_seleccionado_idx is not None:
+                        cliente_detalle = clientes_filtrados[cliente_seleccionado_idx]
+                        st.json(cliente_detalle.obtener_resumen())
+            else:
+                st.info("No hay clientes que coincidan con los filtros seleccionados.")
+        
+        else:
+            st.info("📝 No hay clientes generados.")
+    
+    # PESTAÑA ÓRDENES
+    with tab_ordenes:
+        st.subheader("📋 Lista de Órdenes")
+        
+        if st.session_state.ordenes_actuales:
+            # Filtros para órdenes
+            col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
+            
+            with col_filtro1:
+                filtro_estado_orden = st.selectbox(
+                    "Filtrar por Estado",
+                    ["Todos"] + [estado.value for estado in EstadoOrden],
+                    key="filtro_estado_orden"
+                )
+            
+            with col_filtro2:
+                filtro_prioridad = st.selectbox(
+                    "Filtrar por Prioridad",
+                    ["Todas"] + [f"{p.value} ({p.name})" for p in PrioridadOrden],
+                    key="filtro_prioridad_orden"
+                )
+            
+            with col_filtro3:
+                ordenar_ordenes_por = st.selectbox(
+                    "Ordenar por",
+                    ["Fecha Creación", "Valor Total", "Prioridad", "Estado"],
+                    key="ordenar_ordenes"
+                )
+            
+            # Aplicar filtros
+            ordenes_filtradas = st.session_state.ordenes_actuales.copy()
+            
+            if filtro_estado_orden != "Todos":
+                ordenes_filtradas = [o for o in ordenes_filtradas if o.estado.value == filtro_estado_orden]
+            
+            if filtro_prioridad != "Todas":
+                prioridad_numero = filtro_prioridad.split(" (")[1].replace(")", "")
+                ordenes_filtradas = [o for o in ordenes_filtradas if o.prioridad.name == prioridad_numero]
+            
+            # Ordenar
+            if ordenar_ordenes_por == "Fecha Creación":
+                ordenes_filtradas.sort(key=lambda o: o.fecha_creacion, reverse=True)
+            elif ordenar_ordenes_por == "Valor Total":
+                ordenes_filtradas.sort(key=lambda o: o.costo_total, reverse=True)
+            elif ordenar_ordenes_por == "Prioridad":
+                ordenes_filtradas.sort(key=lambda o: o.prioridad.value, reverse=True)
+            elif ordenar_ordenes_por == "Estado":
+                ordenes_filtradas.sort(key=lambda o: o.estado.value)
+            
+            # Mostrar resumen de filtros
+            st.write(f"**Mostrando {len(ordenes_filtradas)} de {len(st.session_state.ordenes_actuales)} órdenes**")
+            
+            # Preparar datos para mostrar
+            datos_ordenes = []
+            for orden in ordenes_filtradas:
+                resumen = orden.obtener_resumen()
+                
+                # Formatear estado con emoji
+                estado_emoji = {
+                    "pendiente": "⏳",
+                    "confirmada": "✅",
+                    "en_preparacion": "📦",
+                    "en_transito": "🚚",
+                    "entregada": "✅",
+                    "cancelada": "❌",
+                    "devuelta": "↩️"
+                }
+                
+                estado_formato = f"{estado_emoji.get(resumen['estado'], '❓')} {resumen['estado'].title()}"
+                
+                # Formatear prioridad con color
+                prioridad_emoji = {
+                    1: "🟢",  # Baja
+                    2: "🟡",  # Media
+                    3: "🟠",  # Alta
+                    4: "🔴"   # Crítica
+                }
+                
+                prioridad_formato = f"{prioridad_emoji.get(resumen['prioridad'], '⚪')} {PrioridadOrden(resumen['prioridad']).name.title()}"
+                
+                datos_ordenes.append({
+                    "ID": resumen['orden_id'],
+                    "Cliente ID": resumen['cliente_id'],
+                    "Tipo": resumen['tipo'].title(),
+                    "Estado": estado_formato,
+                    "Prioridad": prioridad_formato,
+                    "Origen": resumen['nodo_origen'],
+                    "Destino": resumen['nodo_destino'],
+                    "Descripción": resumen['descripcion'],
+                    "Valor Base": f"${resumen['valor_base']:,.2f}",
+                    "Costo Envío": f"${resumen['costo_envio']:,.2f}",
+                    "Costo Total": f"${resumen['costo_total']:,.2f}",
+                    "Peso (kg)": resumen['peso_kg'],
+                    "Fecha Creación": datetime.fromisoformat(resumen['fecha_creacion']).strftime("%Y-%m-%d %H:%M"),
+                    "Entrega Solicitada": datetime.fromisoformat(resumen['fecha_entrega_solicitada']).strftime("%Y-%m-%d"),
+                    "Vencida": "🔴 Sí" if resumen['esta_vencida'] else "🟢 No",
+                    "Tiempo Transcurrido": f"{resumen['tiempo_transcurrido_total']:.1f}h"
+                })
+            
+            # Mostrar tabla de órdenes
+            if datos_ordenes:
+                st.dataframe(
+                    datos_ordenes,
+                    use_container_width=True,
+                    hide_index=True
+                )
+                
+                # Estadísticas adicionales
+                st.subheader("📊 Estadísticas de Órdenes")
+                
+                col_stats1, col_stats2, col_stats3 = st.columns(3)
+                
+                with col_stats1:
+                    # Distribución por estado
+                    distribucion_estado = {}
+                    for orden in ordenes_filtradas:
+                        estado = orden.estado.value
+                        distribucion_estado[estado] = distribucion_estado.get(estado, 0) + 1
+                    
+                    st.write("**Por Estado:**")
+                    for estado, cantidad in distribucion_estado.items():
+                        st.write(f"• {estado.title()}: {cantidad}")
+                
+                with col_stats2:
+                    # Distribución por prioridad
+                    distribucion_prioridad = {}
+                    for orden in ordenes_filtradas:
+                        prioridad = PrioridadOrden(orden.prioridad.value).name
+                        distribucion_prioridad[prioridad] = distribucion_prioridad.get(prioridad, 0) + 1
+                    
+                    st.write("**Por Prioridad:**")
+                    for prioridad, cantidad in distribucion_prioridad.items():
+                        st.write(f"• {prioridad.title()}: {cantidad}")
+                
+                with col_stats3:
+                    # Métricas financieras
+                    if ordenes_filtradas:
+                        valor_promedio = sum(o.costo_total for o in ordenes_filtradas) / len(ordenes_filtradas)
+                        orden_max_valor = max(ordenes_filtradas, key=lambda o: o.costo_total)
+                        
+                        st.write("**Métricas Financieras:**")
+                        st.write(f"• Valor Promedio: ${valor_promedio:,.2f}")
+                        st.write(f"• Orden Máxima: ${orden_max_valor.costo_total:,.2f}")
+                
+                # Sección de detalles en JSON
+                st.subheader("📄 Detalles Completos de Órdenes")
+                
+                # Selector de orden para mostrar detalles
+                nombres_ordenes = [f"{o.orden_id} - {o.descripcion}" for o in ordenes_filtradas]
+                if nombres_ordenes:
+                    orden_seleccionada_idx = st.selectbox(
+                        "Seleccionar orden para ver detalles:",
+                        range(len(nombres_ordenes)),
+                        format_func=lambda x: nombres_ordenes[x],
+                        key="selector_orden_detalle"
+                    )
+                    
+                    if orden_seleccionada_idx is not None:
+                        orden_detalle = ordenes_filtradas[orden_seleccionada_idx]
+                        st.json(orden_detalle.obtener_resumen())
+            else:
+                st.info("No hay órdenes que coincidan con los filtros seleccionados.")
+        
+        else:
+            st.info("📝 No hay órdenes generadas.")
+
+# ...existing code...
 
 def main():
     """Función principal del dashboard"""
@@ -633,6 +972,17 @@ def main():
             st.success("✅ Grafo cargado")
             st.write(f"Nodos: {st.session_state.estadisticas_actuales['numero_vertices']}")
             st.write(f"Aristas: {st.session_state.estadisticas_actuales['numero_aristas']}")
+            
+            # Información de clientes y órdenes
+            if st.session_state.clientes_actuales or st.session_state.ordenes_actuales:
+                st.write("---")
+                st.write("**Datos de Simulación:**")
+                st.write(f"👥 Clientes: {len(st.session_state.clientes_actuales)}")
+                st.write(f"📋 Órdenes: {len(st.session_state.ordenes_actuales)}")
+                
+                if st.session_state.ordenes_actuales:
+                    valor_total = sum(orden.costo_total for orden in st.session_state.ordenes_actuales)
+                    st.write(f"💰 Valor Total: ${valor_total:,.2f}")
         else:
             st.info("⏳ Sin grafo cargado")
         
@@ -642,9 +992,10 @@ def main():
             st.rerun()
     
     # Pestañas principales
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "🚀 Simulación", 
         "📊 Análisis", 
+        "👥 Clients & Orders",
         "🗺️ Rutas", 
         "📈 Historial"
     ])
@@ -824,12 +1175,16 @@ def main():
     with tab2:
         mostrar_analisis_detallado()
 
-    # PESTAÑA 3: RUTAS
+    # PESTAÑA 3: CLIENTES Y ÓRDENES
     with tab3:
+        mostrar_clientes_y_ordenes()
+
+    # PESTAÑA 4: RUTAS
+    with tab4:
         mostrar_analisis_rutas()
 
-    # PESTAÑA 4: HISTORIAL
-    with tab4:
+    # PESTAÑA 5: HISTORIAL
+    with tab5:
         mostrar_historial()
 
 if __name__ == "__main__":
