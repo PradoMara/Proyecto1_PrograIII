@@ -1,14 +1,6 @@
-# Dependencias principales del proyecto
 streamlit>=1.28.0
-plotly>=5.15.0
-pandas>=2.0.0
-networkx>=3.0
-numpy>=1.24.0
-
-# Dependencias opcionales para funcionalidades avanzadas
 matplotlib>=3.7.0
-seaborn>=0.12.0
-
-# Dependencias de desarrollo
-pytest>=7.0.0
-pytest-cov>=4.0.0
+networkx>=3.1.0
+pandas>=2.0.0
+numpy>=1.24.0
+plotly>=5.15.0
