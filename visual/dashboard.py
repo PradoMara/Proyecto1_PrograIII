@@ -1081,6 +1081,457 @@ def mostrar_clientes_y_ordenes():
                 for estado, cantidad in estados_ordenes.items():
                     st.write(f"• {estado}: {cantidad} órdenes")
 
+
+def mostrar_analisis_rutas():
+    """Muestra la pestaña de análisis de rutas con visualización del árbol AVL"""
+    st.header("🗺️ Análisis de Rutas Frecuentes")
+    
+    # Verificar si hay datos de simulación
+    if st.session_state.grafo_actual is None:
+        st.warning("⚠️ No hay un grafo generado. Ve a la pestaña 'Simulación' para crear uno.")
+        return
+    
+    if not st.session_state.ordenes_actuales:
+        st.info("📋 No hay órdenes generadas. Las rutas se crean basándose en las órdenes de los clientes.")
+        return
+    
+    # === SECCIÓN 1: GENERACIÓN DE RUTAS FRECUENTES ===
+    st.subheader("🚀 Generación de Rutas Frecuentes")
+    
+    col_gen1, col_gen2, col_gen3 = st.columns([2, 1, 1])
+    
+    with col_gen1:
+        st.write("**Opciones de Generación**")
+        incluir_rutas_explorador = st.checkbox(
+            "Incluir rutas del explorador", 
+            value=True,
+            help="Incluye las rutas calculadas en el explorador de red"
+        )
+        
+        min_frecuencia = st.slider(
+            "Frecuencia mínima para mostrar",
+            min_value=1, max_value=10, value=1,
+            help="Solo mostrar rutas con al menos esta frecuencia de uso"
+        )
+    
+    with col_gen2:
+        if st.button("🔄 Generar Rutas", type="primary"):
+            with st.spinner("🔄 Generando rutas frecuentes..."):
+                rutas_generadas = _generar_rutas_desde_ordenes(incluir_rutas_explorador)
+                if rutas_generadas > 0:
+                    st.success(f"✅ Generadas {rutas_generadas} rutas frecuentes")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ No se pudieron generar rutas desde las órdenes")
+    
+    with col_gen3:
+        if st.button("🗑️ Limpiar AVL"):
+            st.session_state.avl_rutas = AVLRutas()
+            st.success("✅ AVL de rutas limpiado")
+            st.rerun()
+    
+    # === SECCIÓN 2: ESTADÍSTICAS DEL AVL ===
+    st.markdown("---")
+    st.subheader("📊 Estadísticas del Árbol AVL")
+    
+    stats_avl = st.session_state.avl_rutas.obtener_estadisticas_uso()
+    
+    if stats_avl['total_rutas'] == 0:
+        st.info("📝 El árbol AVL está vacío. Genera rutas para comenzar el análisis.")
+        return
+    
+    # Métricas principales
+    col_met1, col_met2, col_met3, col_met4 = st.columns(4)
+    
+    with col_met1:
+        st.metric("🗺️ Total Rutas", stats_avl['total_rutas'])
+    
+    with col_met2:
+        st.metric("🔄 Total Usos", stats_avl['total_usos'])
+    
+    with col_met3:
+        st.metric("📈 Uso Promedio", f"{stats_avl['uso_promedio']:.1f}")
+    
+    with col_met4:
+        st.metric("🌳 Altura Árbol", stats_avl['altura_arbol'])
+    
+    # === SECCIÓN 3: RUTAS MÁS FRECUENTES ===
+    st.markdown("---")
+    st.subheader("🔥 Rutas Más Frecuentes")
+    
+    rutas_frecuentes = st.session_state.avl_rutas.obtener_rutas_por_frecuencia(limite=10)
+    rutas_filtradas = [r for r in rutas_frecuentes if r.frecuencia_uso >= min_frecuencia]
+    
+    if rutas_filtradas:
+        # Tabla de rutas frecuentes
+        col_tabla, col_detalles = st.columns([2, 1])
+        
+        with col_tabla:
+            st.write("**📋 Top Rutas por Frecuencia**")
+            
+            datos_rutas = []
+            for i, ruta in enumerate(rutas_filtradas[:10], 1):
+                datos_rutas.append({
+                    "Rank": i,
+                    "Ruta ID": ruta.ruta_id,
+                    "Origen": ruta.origen,
+                    "Destino": ruta.destino,
+                    "Frecuencia": ruta.frecuencia_uso,
+                    "Distancia": f"{ruta.distancia:.2f} km",
+                    "Camino": " → ".join(ruta.camino[:3]) + ("..." if len(ruta.camino) > 3 else "")
+                })
+            
+            df_rutas = pd.DataFrame(datos_rutas)
+            st.dataframe(df_rutas, use_container_width=True, hide_index=True)
+        
+        with col_detalles:
+            st.write("**🏆 Estadísticas Destacadas**")
+            
+            if stats_avl['ruta_mas_usada']:
+                st.success(f"🥇 **Ruta más usada:**")
+                st.write(f"• {stats_avl['ruta_mas_usada'].origen} → {stats_avl['ruta_mas_usada'].destino}")
+                st.write(f"• Usos: {stats_avl['ruta_mas_usada'].frecuencia_uso}")
+                st.write(f"• Distancia: {stats_avl['ruta_mas_usada'].distancia:.2f} km")
+            
+            if stats_avl['rutas_nunca_usadas'] > 0:
+                st.warning(f"⚠️ **Rutas sin uso:** {stats_avl['rutas_nunca_usadas']}")
+        
+        # === SECCIÓN 4: VISUALIZACIÓN DEL ÁRBOL AVL ===
+        st.markdown("---")
+        st.subheader("🌳 Visualización del Árbol AVL")
+        
+        if len(rutas_filtradas) <= 30:  # Limitar para evitar visualizaciones muy densas
+            _crear_visualizacion_avl(rutas_filtradas)
+        else:
+            st.warning(f"⚠️ Demasiadas rutas para visualizar ({len(rutas_filtradas)}). Mostrando solo las top 30.")
+            _crear_visualizacion_avl(rutas_filtradas[:30])
+    
+    else:
+        st.info(f"📝 No hay rutas con frecuencia mínima de {min_frecuencia}. Ajusta el filtro o genera más rutas.")
+    
+    # === SECCIÓN 5: ANÁLISIS DETALLADO ===
+    st.markdown("---")
+    st.subheader("🔍 Análisis Detallado")
+    
+    col_analisis1, col_analisis2 = st.columns(2)
+    
+    with col_analisis1:
+        st.write("**🎯 Búsqueda por Origen-Destino**")
+        
+        # Obtener nodos únicos del grafo
+        vertices = list(st.session_state.grafo_actual.vertices())
+        nodos_nombres = [v.element()['nombre'] for v in vertices]
+        
+        origen_busqueda = st.selectbox("Origen:", ["Seleccionar..."] + nodos_nombres, key="origen_busqueda_avl")
+        destino_busqueda = st.selectbox("Destino:", ["Seleccionar..."] + nodos_nombres, key="destino_busqueda_avl")
+        
+        if origen_busqueda != "Seleccionar..." and destino_busqueda != "Seleccionar..." and origen_busqueda != destino_busqueda:
+            rutas_origen_destino = st.session_state.avl_rutas.buscar_rutas_por_origen_destino(origen_busqueda, destino_busqueda)
+            
+            if rutas_origen_destino:
+                st.success(f"✅ Encontradas {len(rutas_origen_destino)} rutas")
+                for ruta in rutas_origen_destino:
+                    st.write(f"• **{ruta.ruta_id}**: {ruta.frecuencia_uso} usos, {ruta.distancia:.2f} km")
+            else:
+                st.info("📝 No se encontraron rutas para esta combinación origen-destino")
+    
+    with col_analisis2:
+        st.write("**📊 Propiedades del AVL**")
+        
+        col_prop1, col_prop2 = st.columns(2)
+        
+        with col_prop1:
+            esta_balanceado = st.session_state.avl_rutas.es_balanceado()
+            st.metric("⚖️ Balanceado", "Sí" if esta_balanceado else "No")
+            
+        with col_prop2:
+            esta_vacio = st.session_state.avl_rutas.esta_vacio()
+            st.metric("📭 Vacío", "Sí" if esta_vacio else "No")
+        
+        if st.button("🔧 Verificar Estructura"):
+            if esta_balanceado:
+                st.success("✅ El árbol AVL está correctamente balanceado")
+            else:
+                st.error("❌ El árbol AVL no está balanceado (esto no debería ocurrir)")
+            
+            st.info(f"📏 Factor de balanceo máximo permitido: ±1")
+            st.info(f"🌳 Altura teórica mínima: {int(1.44 * stats_avl['total_rutas'])}")
+
+
+def _generar_rutas_desde_ordenes(incluir_explorador=True):
+    """Genera rutas frecuentes basándose en las órdenes y las añade al AVL"""
+    from model import CalculadorDistancias
+    from domain.route import crear_ruta_desde_camino, generar_id_ruta
+    import random
+    
+    rutas_generadas = 0
+    
+    try:
+        # Incluir rutas del explorador si está habilitado
+        if incluir_explorador and hasattr(st.session_state, 'historial_rutas') and st.session_state.historial_rutas:
+            for ruta_hist in st.session_state.historial_rutas:
+                ruta_id = f"explorador_{ruta_hist['origen_id']}_{ruta_hist['destino_id']}"
+                # Verificar si ya existe para incrementar uso
+                if st.session_state.avl_rutas.buscar_ruta(ruta_id):
+                    st.session_state.avl_rutas.incrementar_uso_ruta(ruta_id, 1)
+                else:
+                    # Crear nueva ruta desde historial
+                    camino_nombres = [ruta_hist['origen_nombre'], ruta_hist['destino_nombre']]
+                    ruta_info = crear_ruta_desde_camino(
+                        ruta_id=ruta_id,
+                        camino=camino_nombres,
+                        distancia=ruta_hist['distancia'],
+                        metadatos={"origen": "explorador", "saltos": ruta_hist['saltos']}
+                    )
+                    ruta_info.frecuencia_uso = 1
+                    st.session_state.avl_rutas.insertar_ruta(ruta_info)
+                    rutas_generadas += 1
+        
+        # Generar rutas desde órdenes
+        grafo = st.session_state.grafo_actual
+        vertices = list(grafo.vertices())
+        nodos_dict = {v.element()['id']: v for v in vertices}
+        
+        # Crear rutas frecuentes basándose en las órdenes
+        conteo_rutas = {}
+        
+        for orden in st.session_state.ordenes_actuales:
+            origen_id = orden.nodo_origen
+            destino_id = orden.nodo_destino
+            
+            # Buscar nodos en el grafo
+            if origen_id in nodos_dict and destino_id in nodos_dict:
+                nodo_origen = nodos_dict[origen_id]
+                nodo_destino = nodos_dict[destino_id]
+                
+                # Intentar calcular ruta
+                resultado = CalculadorDistancias.encontrar_camino_mas_corto(grafo, nodo_origen, nodo_destino)
+                
+                if resultado:
+                    camino, distancia_total = resultado
+                    camino_nombres = [nodo.element()['nombre'] for nodo in camino]
+                    
+                    # Crear clave para la ruta
+                    ruta_key = f"{camino_nombres[0]} → {camino_nombres[-1]}"
+                    
+                    if ruta_key not in conteo_rutas:
+                        conteo_rutas[ruta_key] = {
+                            'camino': camino_nombres,
+                            'distancia': distancia_total,
+                            'frecuencia': 0,
+                            'origen': camino_nombres[0],
+                            'destino': camino_nombres[-1]
+                        }
+                    
+                    conteo_rutas[ruta_key]['frecuencia'] += 1
+        
+        # Insertar rutas en el AVL
+        for i, (ruta_key, datos) in enumerate(conteo_rutas.items()):
+            if datos['frecuencia'] >= 1:  # Solo rutas con al menos un uso
+                ruta_id = generar_id_ruta(datos['origen'], datos['destino'], i)
+                
+                # Verificar si ya existe
+                if st.session_state.avl_rutas.buscar_ruta(ruta_id):
+                    st.session_state.avl_rutas.incrementar_uso_ruta(ruta_id, datos['frecuencia'])
+                else:
+                    ruta_info = crear_ruta_desde_camino(
+                        ruta_id=ruta_id,
+                        camino=datos['camino'],
+                        distancia=datos['distancia'],
+                        metadatos={
+                            "origen": "ordenes_simulacion",
+                            "tipo_generacion": "automatica"
+                        }
+                    )
+                    ruta_info.frecuencia_uso = datos['frecuencia']
+                    st.session_state.avl_rutas.insertar_ruta(ruta_info)
+                    rutas_generadas += 1
+        
+        return rutas_generadas
+        
+    except Exception as e:
+        st.error(f"Error generando rutas: {str(e)}")
+        return 0
+
+
+def _crear_visualizacion_avl(rutas_frecuentes):
+    """Crea una visualización del árbol AVL usando NetworkX"""
+    try:
+        import networkx as nx
+        import plotly.graph_objects as go
+        import plotly.express as px
+        import math
+        
+        # Crear grafo dirigido para la visualización
+        G = nx.DiGraph()
+        
+        # Obtener todas las rutas del AVL y construir el árbol de visualización
+        def agregar_nodo_recursivo(nodo_avl, G, pos_x=0, pos_y=0, nivel=0, parent=None):
+            if nodo_avl is None:
+                return
+            
+            # Crear ID único para el nodo en la visualización
+            node_id = f"avl_{nodo_avl.key}"
+            
+            # Agregar nodo con información
+            ruta_info = nodo_avl.ruta_info
+            label = f"{ruta_info.origen} → {ruta_info.destino}"
+            
+            G.add_node(node_id, 
+                      label=label,
+                      frecuencia=ruta_info.frecuencia_uso,
+                      distancia=ruta_info.distancia,
+                      pos=(pos_x, pos_y),
+                      nivel=nivel,
+                      height=nodo_avl.height)
+            
+            # Agregar arista del padre si existe
+            if parent:
+                G.add_edge(parent, node_id)
+            
+            # Calcular posiciones para los hijos
+            offset = max(1, 2 ** (3 - nivel))  # Espaciado dinámico
+            
+            # Recursivamente agregar hijos
+            if nodo_avl.left:
+                agregar_nodo_recursivo(nodo_avl.left, G, pos_x - offset, pos_y - 1, nivel + 1, node_id)
+            
+            if nodo_avl.right:
+                agregar_nodo_recursivo(nodo_avl.right, G, pos_x + offset, pos_y - 1, nivel + 1, node_id)
+        
+        # Construir el grafo desde la raíz del AVL
+        root = st.session_state.avl_rutas.root
+        if root:
+            agregar_nodo_recursivo(root, G)
+            
+            # Obtener posiciones
+            pos = nx.get_node_attributes(G, 'pos')
+            
+            if not pos:  # Fallback si no hay posiciones
+                pos = nx.spring_layout(G, k=2, iterations=50)
+            
+            # Extraer coordenadas
+            x_nodes = [pos[node][0] for node in G.nodes()]
+            y_nodes = [pos[node][1] for node in G.nodes()]
+            
+            # Preparar datos para las aristas
+            x_edges = []
+            y_edges = []
+            
+            for edge in G.edges():
+                x0, y0 = pos[edge[0]]
+                x1, y1 = pos[edge[1]]
+                x_edges.extend([x0, x1, None])
+                y_edges.extend([y0, y1, None])
+            
+            # Preparar datos de los nodos
+            node_labels = []
+            node_colors = []
+            node_sizes = []
+            hover_texts = []
+            
+            for node in G.nodes():
+                data = G.nodes[node]
+                frecuencia = data.get('frecuencia', 0)
+                
+                # Etiqueta con formato especial para AVL
+                label = data.get('label', node)
+                node_labels.append(f"{label}<br>Freq: {frecuencia}")
+                
+                # Color basado en frecuencia (gradiente de azul a rojo)
+                intensity = min(frecuencia / max(1, max(rutas_frecuentes, key=lambda r: r.frecuencia_uso).frecuencia_uso), 1)
+                node_colors.append(intensity)
+                
+                # Tamaño basado en frecuencia
+                size = 20 + (frecuencia * 5)
+                node_sizes.append(min(size, 60))  # Limitar tamaño máximo
+                
+                # Texto de hover
+                hover_text = f"""
+                <b>{label}</b><br>
+                Frecuencia: {frecuencia}<br>
+                Distancia: {data.get('distancia', 0):.2f} km<br>
+                Altura: {data.get('height', 0)}<br>
+                Nivel: {data.get('nivel', 0)}
+                """
+                hover_texts.append(hover_text)
+            
+            # Crear figura
+            fig = go.Figure()
+            
+            # Agregar aristas
+            fig.add_trace(go.Scatter(
+                x=x_edges, y=y_edges,
+                mode='lines',
+                line=dict(color='rgba(125,125,125,0.5)', width=2),
+                hoverinfo='none',
+                showlegend=False,
+                name='Conexiones'
+            ))
+            
+            # Agregar nodos
+            fig.add_trace(go.Scatter(
+                x=x_nodes, y=y_nodes,
+                mode='markers+text',
+                marker=dict(
+                    size=node_sizes,
+                    color=node_colors,
+                    colorscale='Viridis',
+                    colorbar=dict(
+                        title="Frecuencia<br>de Uso",
+                        x=1.02
+                    ),
+                    line=dict(width=2, color='rgba(50,50,50,0.8)')
+                ),
+                text=node_labels,
+                textposition="middle center",
+                textfont=dict(size=10, color='white'),
+                hovertext=hover_texts,
+                hoverinfo='text',
+                showlegend=False,
+                name='Rutas'
+            ))
+            
+            # Configurar layout
+            fig.update_layout(
+                title={
+                    'text': f"🌳 Árbol AVL de Rutas Frecuentes ({len(G.nodes())} nodos)",
+                    'x': 0.5,
+                    'xanchor': 'center'
+                },
+                showlegend=False,
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                plot_bgcolor='rgba(0,0,0,0)',
+                height=600,
+                margin=dict(l=20, r=80, t=60, b=20)
+            )
+            
+            # Mostrar la visualización
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Información adicional
+            col_info1, col_info2, col_info3 = st.columns(3)
+            
+            with col_info1:
+                st.info(f"🌳 **Nodos totales:** {len(G.nodes())}")
+            
+            with col_info2:
+                st.info(f"🔗 **Conexiones:** {len(G.edges())}")
+            
+            with col_info3:
+                altura_real = st.session_state.avl_rutas.altura()
+                st.info(f"📏 **Altura real:** {altura_real}")
+        
+        else:
+            st.warning("⚠️ El árbol AVL está vacío")
+    
+    except ImportError:
+        st.error("❌ Error: Se requieren las librerías networkx y plotly para la visualización")
+    except Exception as e:
+        st.error(f"❌ Error creando visualización: {str(e)}")
+
+
 def main():
     """Función principal del dashboard"""
     
@@ -1325,8 +1776,7 @@ def main():
 
     # PESTAÑA 4: RUTAS
     with tab4:
-        st.info("🚧 Funcionalidad de análisis de rutas en desarrollo")
-        # mostrar_analisis_rutas()
+        mostrar_analisis_rutas()
 
     # PESTAÑA 5: HISTORIAL
     with tab5:
