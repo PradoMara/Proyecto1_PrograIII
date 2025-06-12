@@ -104,7 +104,11 @@ class AVLTree:
     
     def add_route(self, route_path):
         """Agrega una ruta al árbol AVL"""
-        route_key = " → ".join(route_path)
+        # Convertir los IDs de nodos a strings antes de hacer join
+        if isinstance(route_path, list):
+            route_key = " → ".join([str(node_id) for node_id in route_path])
+        else:
+            route_key = str(route_path)
         self.root = self.insert(self.root, route_key)
     
     def inorder_traversal(self, root, result):

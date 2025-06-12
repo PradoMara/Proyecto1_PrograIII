@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import networkx as nx
-import numpy as np
 from models.node import NodeType
 
 class NetworkVisualizer:
@@ -61,7 +60,7 @@ class NetworkVisualizer:
             node = self.graph.nodes[node_id]
             node_colors.append(self.colors[node.type])
             node_sizes.append(self.node_sizes[node.type])
-            node_labels[node_id] = f"{node.type.value}{node.name}"
+            node_labels[node_id] = f"{node.name}"
         
         # Dibujar aristas normales
         edge_colors = ['gray' for _ in G.edges()]
@@ -85,11 +84,6 @@ class NetworkVisualizer:
                               node_size=node_sizes, alpha=0.8, ax=ax)
         
         nx.draw_networkx_labels(G, pos, node_labels, font_size=8, ax=ax)
-        
-        # Agregar pesos de aristas
-        edge_labels = nx.get_edge_attributes(G, 'weight')
-        edge_labels = {k: f"{v:.1f}" for k, v in edge_labels.items()}
-        nx.draw_networkx_edge_labels(G, pos, edge_labels, font_size=6, ax=ax)
         
         # Configurar el plot
         ax.set_title("Red de Distribución de Drones", fontsize=16, fontweight='bold')
@@ -150,11 +144,11 @@ class NetworkVisualizer:
                               arrows=True, arrowsize=20, ax=ax)
         
         nx.draw_networkx_nodes(G, pos, node_color='lightblue', 
-                              node_size=2000, alpha=0.8, ax=ax)
+                              node_size=1000, alpha=0.8, ax=ax)
         
         # Agregar etiquetas personalizadas
         labels = nx.get_node_attributes(G, 'label')
-        nx.draw_networkx_labels(G, pos, labels, font_size=8, ax=ax)
+        nx.draw_networkx_labels(G, pos, labels, font_size=6, ax=ax)
         
         ax.set_title("Árbol AVL - Registro de Rutas", 
                     fontsize=16, fontweight='bold')
@@ -216,88 +210,3 @@ class NetworkVisualizer:
             level_indices[level] += 1
         
         return pos
-    
-    def create_statistics_plots(self, figsize=(15, 10)):
-        """Crea gráficos estadísticos del sistema"""
-        if not self.graph.nodes:
-            return None
-        
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=figsize)
-        
-        # 1. Distribución de tipos de nodos
-        node_types = [node.type for node in self.graph.nodes.values()]
-        type_counts = {}
-        for node_type in [NodeType.STORAGE, NodeType.CHARGING, NodeType.CLIENT]:
-            type_counts[node_type.value] = node_types.count(node_type)
-        
-        colors = [self.colors[NodeType.STORAGE], 
-                 self.colors[NodeType.CHARGING], 
-                 self.colors[NodeType.CLIENT]]
-        
-        ax1.pie(type_counts.values(), labels=type_counts.keys(), 
-               colors=colors, autopct='%1.1f%%', startangle=90)
-        ax1.set_title("Distribución de Tipos de Nodos")
-        
-        # 2. Nodos más visitados
-        visited_counts = [(node.name, node.visit_count) 
-                         for node in self.graph.nodes.values() 
-                         if node.visit_count > 0]
-        
-        if visited_counts:
-            visited_counts.sort(key=lambda x: x[1], reverse=True)
-            top_visited = visited_counts[:10]
-            
-            names, counts = zip(*top_visited)
-            ax2.bar(names, counts, color='skyblue')
-            ax2.set_title("Nodos Más Visitados")
-            ax2.set_xlabel("Nodos")
-            ax2.set_ylabel("Visitas")
-            ax2.tick_params(axis='x', rotation=45)
-        else:
-            ax2.text(0.5, 0.5, "No hay datos de visitas", 
-                    ha='center', va='center', fontsize=12)
-            ax2.set_xlim(0, 1)
-            ax2.set_ylim(0, 1)
-        
-        # 3. Estado de órdenes
-        if self.graph.orders:
-            order_statuses = [order.status for order in self.graph.orders]
-            status_counts = {}
-            for status in set(order_statuses):
-                status_counts[status] = order_statuses.count(status)
-            
-            ax3.bar(status_counts.keys(), status_counts.values(), 
-                   color=['green' if 'Entregado' in k else 'orange' for k in status_counts.keys()])
-            ax3.set_title("Estado de Órdenes")
-            ax3.set_xlabel("Estado")
-            ax3.set_ylabel("Cantidad")
-        else:
-            ax3.text(0.5, 0.5, "No hay órdenes", 
-                    ha='center', va='center', fontsize=12)
-            ax3.set_xlim(0, 1)
-            ax3.set_ylim(0, 1)
-        
-        # 4. Costos de rutas
-        if self.graph.orders:
-            completed_orders = [order for order in self.graph.orders 
-                              if order.status == "Entregado" and order.total_cost > 0]
-            
-            if completed_orders:
-                costs = [order.total_cost for order in completed_orders]
-                ax4.hist(costs, bins=10, color='lightcoral', edgecolor='black')
-                ax4.set_title("Distribución de Costos de Entrega")
-                ax4.set_xlabel("Costo")
-                ax4.set_ylabel("Frecuencia")
-            else:
-                ax4.text(0.5, 0.5, "No hay entregas completadas", 
-                        ha='center', va='center', fontsize=12)
-                ax4.set_xlim(0, 1)
-                ax4.set_ylim(0, 1)
-        else:
-            ax4.text(0.5, 0.5, "No hay datos de costos", 
-                    ha='center', va='center', fontsize=12)
-            ax4.set_xlim(0, 1)
-            ax4.set_ylim(0, 1)
-        
-        plt.tight_layout()
-        return fig

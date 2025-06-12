@@ -19,8 +19,8 @@ class DroneSimulation:
     def initialize_simulation(self, n_nodes=15, m_edges=20, n_orders=10):
         """Inicializa la simulación con parámetros dados"""
         try:
-            # Validaciones
-            min_edges = n_nodes - 1  # Mínimo para conectividad
+            # Validaciones básicas
+            min_edges = n_nodes - 1
             if m_edges < min_edges:
                 m_edges = min_edges
                 st.warning(f"Número de aristas ajustado a {m_edges} para garantizar conectividad.")
@@ -33,9 +33,9 @@ class DroneSimulation:
                 st.warning("El número máximo de aristas es 300.")
                 m_edges = 300
             
-            if n_orders > 500:
-                st.warning("El número máximo de órdenes es 500.")
-                n_orders = 500
+            if n_orders > 300:
+                st.warning("El número máximo de órdenes es 300.")
+                n_orders = 300
             
             # Generar red
             self.graph.generate_random_network(n_nodes, m_edges)
@@ -48,27 +48,11 @@ class DroneSimulation:
             # Generar órdenes
             self.graph.generate_orders(n_orders)
             
-            # Actualizar visualizador
+            # Actualizar componentes
             self.visualizer = NetworkVisualizer(self.graph)
             self.pathfinder = PathFinder(self.graph)
             
             self.is_initialized = True
-            
-            # Mostrar estadísticas
-            stats = self.graph.get_network_stats()
-            st.success("🎉 Simulación inicializada exitosamente!")
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("📦 Almacenamiento", 
-                         f"{stats['storage']['count']} ({stats['storage']['percentage']:.1f}%)")
-            with col2:
-                st.metric("🔋 Recarga", 
-                         f"{stats['charging']['count']} ({stats['charging']['percentage']:.1f}%)")
-            with col3:
-                st.metric("👤 Clientes", 
-                         f"{stats['client']['count']} ({stats['client']['percentage']:.1f}%)")
-            
             return True
             
         except Exception as e:
@@ -86,13 +70,8 @@ class DroneSimulation:
             return None
         
         try:
-            # Seleccionar algoritmo
-            if algorithm == "BFS":
-                path = self.pathfinder.find_path_bfs(origin, destination)
-            elif algorithm == "DFS":
-                path = self.pathfinder.find_path_dfs(origin, destination)
-            else:  # Topological Sort
-                path = self.pathfinder.topological_sort_path(origin, destination)
+            # Usar BFS por defecto
+            path = self.pathfinder.find_path_bfs(origin, destination)
             
             if not path:
                 st.error("No se encontró una ruta válida entre los nodos seleccionados.")
@@ -127,8 +106,6 @@ class DroneSimulation:
                     order.status == "Pendiente"):
                     
                     order.complete_delivery(route_info['cost'], route_info['path'])
-                    
-                    st.success(f"✅ Entrega completada! Orden {order.id} - Costo: {route_info['cost']:.2f}")
                     return True
             
             # Si no hay orden existente, crear una nueva
@@ -145,8 +122,6 @@ class DroneSimulation:
                 self.graph.orders.append(new_order)
                 self.graph.clients[client_id].add_order(new_order)
                 self.graph.next_order_id += 1
-                
-                st.success(f"✅ Nueva orden creada y completada! ID: {new_order.id} - Costo: {route_info['cost']:.2f}")
                 return True
             
             return False
@@ -174,17 +149,6 @@ class DroneSimulation:
             st.error(f"Error al generar visualización AVL: {str(e)}")
             return None
     
-    def get_statistics_visualization(self):
-        """Obtiene gráficos estadísticos"""
-        if not self.is_initialized:
-            return None
-        
-        try:
-            return self.visualizer.create_statistics_plots()
-        except Exception as e:
-            st.error(f"Error al generar estadísticas: {str(e)}")
-            return None
-    
     def get_clients_data(self):
         """Obtiene datos de clientes para visualización"""
         if not self.is_initialized:
@@ -203,23 +167,12 @@ class DroneSimulation:
         """Obtiene análisis de rutas más frecuentes"""
         return self.route_registry.get_most_frequent_routes(20)
     
-    def get_node_options(self, node_type=None):
+    def get_node_options(self):
         """Obtiene opciones de nodos para selectbox"""
         if not self.is_initialized:
             return []
         
-        if node_type:
-            if node_type == "storage":
-                nodes = self.graph.get_storage_nodes()
-            elif node_type == "client":
-                nodes = self.graph.get_client_nodes()
-            elif node_type == "charging":
-                nodes = self.graph.get_charging_nodes()
-            else:
-                nodes = list(self.graph.nodes.keys())
-        else:
-            nodes = list(self.graph.nodes.keys())
-        
+        nodes = list(self.graph.nodes.keys())
         return [(node_id, f"{self.graph.nodes[node_id].type.value} {self.graph.nodes[node_id].name} (ID: {node_id})") 
                 for node_id in nodes]
     

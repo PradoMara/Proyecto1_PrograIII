@@ -118,12 +118,14 @@ class Graph:
         return any(neighbor == node2 for neighbor, _ in self.edges[node1])
     
     def _calculate_distance(self, node1_id, node2_id):
-        """Calcula la distancia euclidiana entre dos nodos"""
+        """Calcula la distancia euclidiana entre dos nodos escalada"""
         node1 = self.nodes[node1_id]
         node2 = self.nodes[node2_id]
         dx = node1.x - node2.x
         dy = node1.y - node2.y
-        return math.sqrt(dx * dx + dy * dy)
+        distance = math.sqrt(dx * dx + dy * dy)
+        # Escalar la distancia para que sea más manejable (máximo ~15 unidades)
+        return min(15, max(1, distance * 0.15))
     
     def _get_all_edges(self):
         """Obtiene todas las aristas del grafo"""
