@@ -202,3 +202,120 @@ class DroneSimulation:
                     client_visits[f"{node.type.value} {node.name}"] = node.visit_count
         
         return storage_visits, charging_visits, client_visits
+    
+    def get_visit_comparison_chart(self):
+        """Genera gráfico de barras comparativo de nodos más visitados por tipo"""
+        import matplotlib.pyplot as plt
+        
+        storage_visits, charging_visits, client_visits = self.get_visit_statistics()
+        
+        # Obtener top 3 de cada tipo
+        top_storage = sorted(storage_visits.items(), key=lambda x: x[1], reverse=True)[:3]
+        top_charging = sorted(charging_visits.items(), key=lambda x: x[1], reverse=True)[:3]
+        top_clients = sorted(client_visits.items(), key=lambda x: x[1], reverse=True)[:3]
+        
+        # Si no hay datos suficientes, retornar None
+        if not (top_storage or top_charging or top_clients):
+            return None
+        
+        fig, ax = plt.subplots(figsize=(12, 6))
+        
+        # Preparar datos para el gráfico
+        categories = []
+        values = []
+        colors = []
+        
+        # Agregar datos de almacenamiento
+        for node, visits in top_storage:
+            categories.append(f"📦 {node}")
+            values.append(visits)
+            colors.append('#FF6B6B')
+        
+        # Agregar datos de recarga
+        for node, visits in top_charging:
+            categories.append(f"🔋 {node}")
+            values.append(visits)
+            colors.append('#4ECDC4')
+        
+        # Agregar datos de clientes
+        for node, visits in top_clients:
+            categories.append(f"👤 {node}")
+            values.append(visits)
+            colors.append('#45B7D1')
+        
+        # Crear gráfico de barras
+        bars = ax.bar(range(len(categories)), values, color=colors, alpha=0.8)
+        
+        # Configurar el gráfico
+        ax.set_xlabel('Nodos por Tipo')
+        ax.set_ylabel('Número de Visitas')
+        ax.set_title('Comparación de Nodos Más Visitados por Tipo')
+        ax.set_xticks(range(len(categories)))
+        ax.set_xticklabels(categories, rotation=45, ha='right')
+        
+        # Agregar valores sobre las barras
+        for bar, value in zip(bars, values):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                   f'{value}', ha='center', va='bottom', fontweight='bold')
+        
+        # Agregar leyenda
+        legend_elements = [
+            plt.Rectangle((0,0),1,1, facecolor='#FF6B6B', alpha=0.8, label='📦 Almacenamiento'),
+            plt.Rectangle((0,0),1,1, facecolor='#4ECDC4', alpha=0.8, label='🔋 Recarga'),
+            plt.Rectangle((0,0),1,1, facecolor='#45B7D1', alpha=0.8, label='👤 Clientes')
+        ]
+        ax.legend(handles=legend_elements, loc='upper right')
+        
+        plt.tight_layout()
+        return fig
+    
+    def get_node_proportion_chart(self):
+        """Genera gráfico de torta para proporción de nodos por rol"""
+        import matplotlib.pyplot as plt
+        
+        if not self.is_initialized:
+            return None
+        
+        stats = self.get_network_stats()
+        if not stats:
+            return None
+        
+        # Datos para el gráfico de torta
+        labels = ['📦 Almacenamiento', '🔋 Recarga', '👤 Clientes']
+        sizes = [
+            stats['storage']['count'],
+            stats['charging']['count'], 
+            stats['client']['count']
+        ]
+        colors = ['#FF6B6B', '#4ECDC4', '#45B7D1']
+        explode = (0.05, 0.05, 0.05)  # Separar un poco las secciones
+        
+        fig, ax = plt.subplots(figsize=(8, 8))
+        
+        # Crear gráfico de torta
+        wedges, texts, autotexts = ax.pie(sizes, labels=labels, colors=colors, 
+                                         autopct='%1.1f%%', explode=explode,
+                                         shadow=True, startangle=90)
+        
+        # Configurar texto
+        for autotext in autotexts:
+            autotext.set_color('white')
+            autotext.set_fontweight('bold')
+            autotext.set_fontsize(12)
+        
+        for text in texts:
+            text.set_fontsize(11)
+            text.set_fontweight('bold')
+        
+        # Configurar el gráfico
+        ax.set_title('Proporción de Nodos por Rol en la Red', 
+                    fontsize=14, fontweight='bold', pad=20)
+        
+        # Agregar información adicional
+        total_nodes = sum(sizes)
+        ax.text(0, -1.3, f'Total de Nodos: {total_nodes}', 
+               ha='center', fontsize=12, style='italic')
+        
+        plt.tight_layout()
+        return fig

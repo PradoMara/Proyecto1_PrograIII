@@ -183,31 +183,62 @@ elif tab_selection == "📈 General Statistics":
     if not st.session_state.simulation.is_initialized:
         st.warning("⚠️ Debe inicializar la simulación primero.")
     else:
-        # Gráfico de barras comparativo
+        # Obtener estadísticas de visitas
         storage_visits, charging_visits, client_visits = st.session_state.simulation.get_visit_statistics()
         
-        st.subheader("📊 Nodos Más Visitados")
-        
+        # Solo mostrar gráficos si hay datos de visitas
         if storage_visits or charging_visits or client_visits:
-            # Mostrar top 5 de cada tipo
-            st.write("**Almacenamiento más visitados:**")
-            for node, visits in sorted(storage_visits.items(), key=lambda x: x[1], reverse=True)[:5]:
-                st.text(f"{node}: {visits} visitas")
+            col1, col2 = st.columns(2)
             
-            st.write("**Recarga más visitados:**")
-            for node, visits in sorted(charging_visits.items(), key=lambda x: x[1], reverse=True)[:5]:
-                st.text(f"{node}: {visits} visitas")
+            with col1:
+                st.subheader("📊 Nodos Más Visitados por Tipo")
+                
+                # Preparar datos para el gráfico de barras
+                fig_bar = st.session_state.simulation.get_visit_comparison_chart()
+                if fig_bar:
+                    st.pyplot(fig_bar)
+                else:
+                    st.info("No hay suficientes datos de visitas para mostrar el gráfico.")
             
-            st.write("**Clientes más visitados:**")
-            for node, visits in sorted(client_visits.items(), key=lambda x: x[1], reverse=True)[:5]:
-                st.text(f"{node}: {visits} visitas")
+            with col2:
+                st.subheader("🥧 Proporción de Nodos por Rol")
+                
+                # Gráfico de torta para proporción de nodos
+                fig_pie = st.session_state.simulation.get_node_proportion_chart()
+                if fig_pie:
+                    st.pyplot(fig_pie)
+                else:
+                    st.info("No hay datos de nodos para mostrar.")
         else:
-            st.info("No hay datos de visitas.")
+            st.info("📋 No hay datos de visitas para mostrar. Complete algunas entregas primero.")
+            
+            # Mostrar al menos el gráfico de proporción de nodos
+            st.subheader("🥧 Proporción de Nodos por Rol")
+            fig_pie = st.session_state.simulation.get_node_proportion_chart()
+            if fig_pie:
+                st.pyplot(fig_pie)
         
-        # Gráfico de torta para proporción de nodos
-        st.subheader("🥧 Proporción de Nodos por Rol")
+        # Información textual de estadísticas
         stats = st.session_state.simulation.get_network_stats()
         if stats:
-            st.text(f"📦 Almacenamiento: {stats['storage']['count']} ({stats['storage']['percentage']:.1f}%)")
-            st.text(f"🔋 Recarga: {stats['charging']['count']} ({stats['charging']['percentage']:.1f}%)")
-            st.text(f"👤 Clientes: {stats['client']['count']} ({stats['client']['percentage']:.1f}%)")
+            st.subheader("📊 Resumen de la Red")
+            
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.metric("Total Nodos", stats['total_nodes'])
+            
+            with col2:
+                st.metric("Total Aristas", stats['total_edges'])
+            
+            with col3:
+                st.metric("Total Órdenes", stats['total_orders'])
+            
+            with col4:
+                total_visits = sum(storage_visits.values()) + sum(charging_visits.values()) + sum(client_visits.values())
+                st.metric("Total Visitas", total_visits)
+            
+            # Detalles por tipo de nodo
+            st.write("**📦 Almacenamiento:** " + f"{stats['storage']['count']} nodos ({stats['storage']['percentage']:.1f}%)")
+            st.write("**🔋 Recarga:** " + f"{stats['charging']['count']} nodos ({stats['charging']['percentage']:.1f}%)")
+            st.write("**👤 Clientes:** " + f"{stats['client']['count']} nodos ({stats['client']['percentage']:.1f}%)")
