@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from utils.simulation import DroneSimulation
+from utils.api_integration import save_simulation_to_api
 
 # Configuración de la página
 st.set_page_config(
@@ -50,7 +51,10 @@ if tab_selection == "🔄 Run Simulation":
         with st.spinner("Generando red de drones..."):
             success = st.session_state.simulation.initialize_simulation(n_nodes, m_edges, n_orders)
             if success:
+                # Guardar datos para la API
+                save_simulation_to_api(st.session_state.simulation)
                 st.success("🎉 Simulación inicializada exitosamente!")
+                st.info("📡 Datos guardados para acceso desde la API")
 
 # =================== PESTAÑA 2: EXPLORE NETWORK ===================
 elif tab_selection == "🌍 Explore Network":

@@ -1,0 +1,216 @@
+{
+  "is_active": true,
+  "initialized_at": "2025-07-01T15:21:17.613688",
+  "config": {
+    "total_nodes": 15,
+    "total_edges": 15,
+    "total_orders": 10,
+    "total_clients": 9
+  },
+  "clients": [
+    {
+      "ID": 1,
+      "Nombre": "Cliente_1",
+      "Tipo": "Cliente",
+      "Total Pedidos": 3,
+      "Nodo ID": 2
+    },
+    {
+      "ID": 2,
+      "Nombre": "Cliente_2",
+      "Tipo": "Cliente",
+      "Total Pedidos": 1,
+      "Nodo ID": 3
+    },
+    {
+      "ID": 3,
+      "Nombre": "Cliente_3",
+      "Tipo": "Cliente",
+      "Total Pedidos": 0,
+      "Nodo ID": 4
+    },
+    {
+      "ID": 4,
+      "Nombre": "Cliente_4",
+      "Tipo": "Cliente",
+      "Total Pedidos": 2,
+      "Nodo ID": 6
+    },
+    {
+      "ID": 5,
+      "Nombre": "Cliente_5",
+      "Tipo": "Cliente",
+      "Total Pedidos": 2,
+      "Nodo ID": 7
+    },
+    {
+      "ID": 6,
+      "Nombre": "Cliente_6",
+      "Tipo": "Cliente",
+      "Total Pedidos": 1,
+      "Nodo ID": 8
+    },
+    {
+      "ID": 7,
+      "Nombre": "Cliente_7",
+      "Tipo": "Cliente",
+      "Total Pedidos": 1,
+      "Nodo ID": 10
+    },
+    {
+      "ID": 8,
+      "Nombre": "Cliente_8",
+      "Tipo": "Cliente",
+      "Total Pedidos": 0,
+      "Nodo ID": 11
+    },
+    {
+      "ID": 9,
+      "Nombre": "Cliente_9",
+      "Tipo": "Cliente",
+      "Total Pedidos": 0,
+      "Nodo ID": 14
+    }
+  ],
+  "orders": [
+    {
+      "ID": 1,
+      "Cliente ID": 4,
+      "Origen": 13,
+      "Destino": 6,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-01 15:21:17",
+      "Prioridad": 5,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": 2,
+      "Cliente ID": 1,
+      "Origen": 5,
+      "Destino": 2,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-01 15:21:17",
+      "Prioridad": 4,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": 3,
+      "Cliente ID": 6,
+      "Origen": 13,
+      "Destino": 8,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-01 15:21:17",
+      "Prioridad": 5,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": 4,
+      "Cliente ID": 1,
+      "Origen": 13,
+      "Destino": 2,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-01 15:21:17",
+      "Prioridad": 2,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": 5,
+      "Cliente ID": 4,
+      "Origen": 9,
+      "Destino": 6,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-01 15:21:17",
+      "Prioridad": 4,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": 6,
+      "Cliente ID": 5,
+      "Origen": 13,
+      "Destino": 7,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-01 15:21:17",
+      "Prioridad": 4,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": 7,
+      "Cliente ID": 1,
+      "Origen": 9,
+      "Destino": 2,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-01 15:21:17",
+      "Prioridad": 3,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": 8,
+      "Cliente ID": 5,
+      "Origen": 13,
+      "Destino": 7,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-01 15:21:17",
+      "Prioridad": 1,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": 9,
+      "Cliente ID": 2,
+      "Origen": 9,
+      "Destino": 3,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-01 15:21:17",
+      "Prioridad": 1,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": 10,
+      "Cliente ID": 7,
+      "Origen": 9,
+      "Destino": 10,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-01 15:21:17",
+      "Prioridad": 1,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    }
+  ],
+  "visit_statistics": {
+    "clients": [],
+    "recharges": [],
+    "storages": []
+  },
+  "summary": {
+    "network_stats": {
+      "total_nodes": 15,
+      "storage": {
+        "count": 3,
+        "percentage": 20.0
+      },
+      "charging": {
+        "count": 3,
+        "percentage": 20.0
+      },
+      "client": {
+        "count": 9,
+        "percentage": 60.0
+      },
+      "total_edges": 20,
+      "total_orders": 10
+    },
+    "total_visits": 0,
+    "most_visited_client": "N/A",
+    "most_visited_charging": "N/A",
+    "most_visited_storage": "N/A",
+    "simulation_active": true
+  }
+}
