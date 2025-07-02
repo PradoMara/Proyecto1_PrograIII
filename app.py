@@ -110,6 +110,10 @@ elif tab_selection == "🌍 Explore Network":
                     else:
                         st.error("El origen y destino deben ser diferentes.")
                 
+                # Botón Kruskal
+                if st.button("🌳 Kruskal", type="secondary"):
+                    st.info("Algoritmo de Kruskal ejecutado")
+                
                 # Mostrar información de la ruta actual
                 if 'current_route_info' in st.session_state and st.session_state.current_route_info:
                     route_info = st.session_state.current_route_info
