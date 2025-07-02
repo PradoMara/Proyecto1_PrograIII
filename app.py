@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from streamlit_folium import st_folium
 from utils.simulation import DroneSimulation
 from utils.api_integration import save_simulation_to_api
 
@@ -66,15 +67,17 @@ elif tab_selection == "🌍 Explore Network":
         col1, col2 = st.columns([2, 1])
         
         with col1:
-            st.subheader("🗺️ Visualización de la Red")
+            st.subheader("🗺️ Mapa de Temuco")
             
-            # Mostrar grafo
+            # Mostrar mapa de Folium directamente
             if 'current_path' not in st.session_state:
                 st.session_state.current_path = None
             
-            fig = st.session_state.simulation.get_network_visualization(st.session_state.current_path)
-            if fig:
-                st.pyplot(fig)
+            folium_map = st.session_state.simulation.get_folium_map(st.session_state.current_path)
+            if folium_map:
+                st_folium(folium_map, width=1100, height=650)
+            else:
+                st.error("Error al generar el mapa.")
         
         with col2:
             st.subheader("🛣️ Calculadora de Rutas")

@@ -149,6 +149,17 @@ class DroneSimulation:
             st.error(f"Error al generar visualización AVL: {str(e)}")
             return None
     
+    def get_folium_map(self, highlight_path=None):
+        """Obtiene el mapa de Folium con los nodos"""
+        if not self.is_initialized:
+            return None
+        
+        try:
+            return self.visualizer.create_folium_map(highlight_path)
+        except Exception as e:
+            st.error(f"Error al generar mapa: {str(e)}")
+            return None
+    
     def get_clients_data(self):
         """Obtiene datos de clientes para visualización"""
         if not self.is_initialized:
