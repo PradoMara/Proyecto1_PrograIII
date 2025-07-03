@@ -3,6 +3,7 @@ from datetime import datetime
 from models.graph import Graph
 from models.node import NodeType
 from algorithms.pathfinding import PathFinder
+from algorithms.dijkstra import Dijkstra
 from algorithms.kruskal import KruskalMST
 from data_structures.avl_tree import AVLTree
 from utils.visualization import NetworkVisualizer
@@ -13,6 +14,7 @@ class DroneSimulation:
     def __init__(self):
         self.graph = Graph()
         self.pathfinder = PathFinder(self.graph)
+        self.dijkstra = Dijkstra(self.graph)
         self.visualizer = NetworkVisualizer(self.graph)
         self.route_registry = AVLTree()
         self.is_initialized = False
@@ -52,6 +54,7 @@ class DroneSimulation:
             # Actualizar componentes
             self.visualizer = NetworkVisualizer(self.graph)
             self.pathfinder = PathFinder(self.graph)
+            self.dijkstra = Dijkstra(self.graph)
             
             self.is_initialized = True
             return True
@@ -60,8 +63,8 @@ class DroneSimulation:
             st.error(f"Error al inicializar la simulación: {str(e)}")
             return False
     
-    def calculate_route(self, origin, destination, algorithm="BFS"):
-        """Calcula una ruta entre dos nodos"""
+    def calculate_route(self, origin, destination, algorithm="Dijkstra"):
+        """Calcula una ruta entre dos nodos usando el algoritmo de Dijkstra"""
         if not self.is_initialized:
             st.error("Debe inicializar la simulación primero.")
             return None
@@ -71,18 +74,26 @@ class DroneSimulation:
             return None
         
         try:
-            # Usar BFS por defecto
-            path = self.pathfinder.find_path_bfs(origin, destination)
+            # Usar Dijkstra con consideración de batería
+            result = self.dijkstra.find_shortest_path_with_battery(origin, destination)
             
-            if not path:
+            if not result["path"]:
                 st.error("No se encontró una ruta válida entre los nodos seleccionados.")
                 return None
             
-            # Obtener información de la ruta
-            route_info = self.pathfinder.get_path_info(path)
+            # Obtener información detallada de la ruta
+            route_info = self.dijkstra.get_path_info(result["path"])
+            
+            # Agregar información adicional de Dijkstra
+            route_info.update({
+                "algorithm": "Dijkstra",
+                "battery_used": result["battery_used"],
+                "dijkstra_distance": result["distance"],
+                "charging_stops": result["charging_stops"]
+            })
             
             # Incrementar contador de visitas
-            for node_id in path:
+            for node_id in result["path"]:
                 self.graph.nodes[node_id].increment_visit()
             
             return route_info
@@ -106,7 +117,9 @@ class DroneSimulation:
                     order.destination_id == destination and 
                     order.status == "Pendiente"):
                     
-                    order.complete_delivery(route_info['cost'], route_info['path'])
+                    # Usar la distancia de Dijkstra si está disponible, sino usar cost
+                    delivery_cost = route_info.get('dijkstra_distance', route_info.get('cost', route_info.get('distance', 0)))
+                    order.complete_delivery(delivery_cost, route_info['path'])
                     return True
             
             # Si no hay orden existente, crear una nueva
@@ -119,7 +132,8 @@ class DroneSimulation:
             if client_id:
                 from models.node import Order
                 new_order = Order(self.graph.next_order_id, client_id, origin, destination)
-                new_order.complete_delivery(route_info['cost'], route_info['path'])
+                delivery_cost = route_info.get('dijkstra_distance', route_info.get('cost', route_info.get('distance', 0)))
+                new_order.complete_delivery(delivery_cost, route_info['path'])
                 self.graph.orders.append(new_order)
                 self.graph.clients[client_id].add_order(new_order)
                 self.graph.next_order_id += 1
