@@ -308,3 +308,80 @@ class NetworkVisualizer:
                     ).add_to(m)
         
         return m
+
+    def create_folium_map_mst(self, mst_edges):
+        """Crea un mapa de Folium mostrando solo las aristas del MST de Kruskal"""
+        # Coordenadas de Temuco, Chile
+        temuco_lat = -38.7359
+        temuco_lon = -72.5904
+        
+        # Crear el mapa base centrado en Temuco
+        m = folium.Map(
+            location=[temuco_lat, temuco_lon],
+            zoom_start=13,
+            tiles='OpenStreetMap'
+        )
+        
+        # Definir colores para cada tipo de nodo
+        color_map = {
+            NodeType.STORAGE: 'red',
+            NodeType.CHARGING: 'green', 
+            NodeType.CLIENT: 'blue'
+        }
+        
+        # Definir iconos para cada tipo de nodo
+        icon_map = {
+            NodeType.STORAGE: 'cube',
+            NodeType.CHARGING: 'bolt',
+            NodeType.CLIENT: 'user'
+        }
+        
+        # Obtener límites de la ciudad de Temuco para distribuir los nodos
+        lat_min, lat_max = temuco_lat - 0.03, temuco_lat + 0.03
+        lon_min, lon_max = temuco_lon - 0.04, temuco_lon + 0.04
+        
+        # Mapear las coordenadas normalizadas a coordenadas geográficas de Temuco
+        node_positions = {}
+        for node_id, node in self.graph.nodes.items():
+            # Normalizar las coordenadas x, y del rango 0-100 a un rango de 0 a 1
+            normalized_x = node.x / 100.0  # Las coordenadas están entre 0 y 100
+            normalized_y = node.y / 100.0  # Las coordenadas están entre 0 y 100
+            
+            # Mapear a las coordenadas de Temuco
+            lat = lat_min + normalized_y * (lat_max - lat_min)
+            lon = lon_min + normalized_x * (lon_max - lon_min)
+            
+            node_positions[node_id] = [lat, lon]
+            
+            # Crear marcador para el nodo
+            folium.Marker(
+                location=[lat, lon],
+                popup=f"{node.type.value} {node.name}<br>ID: {node_id}<br>Visitas: {node.visit_count}",
+                tooltip=f"{node.type.value} {node.name}",
+                icon=folium.Icon(
+                    color=color_map[node.type],
+                    icon=icon_map[node.type],
+                    prefix='fa'
+                )
+            ).add_to(m)
+        
+        # Agregar solo las aristas del MST
+        for u, v, weight in mst_edges:
+            start_pos = node_positions[u]
+            end_pos = node_positions[v]
+            
+            folium.PolyLine(
+                locations=[start_pos, end_pos],
+                color='orange',  # Color distintivo para las aristas del MST
+                weight=5,
+                opacity=0.8,
+                popup=f"MST - Peso: {weight:.2f}"
+            ).add_to(m)
+        
+        # Agregar título al mapa
+        title_html = '''
+        <h3 align="center" style="font-size:16px"><b>Árbol de Expansión Mínima (Kruskal)</b></h3>
+        '''
+        m.get_root().html.add_child(folium.Element(title_html))
+        
+        return m

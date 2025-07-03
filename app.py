@@ -15,6 +15,12 @@ st.set_page_config(
 if 'simulation' not in st.session_state:
     st.session_state.simulation = DroneSimulation()
 
+# Inicializar variables de estado para Kruskal
+if 'show_kruskal' not in st.session_state:
+    st.session_state.show_kruskal = False
+if 'mst_data' not in st.session_state:
+    st.session_state.mst_data = None
+
 # Título principal
 st.title("🚁 Simulación Logística de Drones - Correos Chile")
 
@@ -73,11 +79,21 @@ elif tab_selection == "🌍 Explore Network":
             if 'current_path' not in st.session_state:
                 st.session_state.current_path = None
             
-            folium_map = st.session_state.simulation.get_folium_map(st.session_state.current_path)
-            if folium_map:
-                st_folium(folium_map, width=1100, height=650)
+            # Decidir qué mapa mostrar según el estado
+            if st.session_state.show_kruskal and st.session_state.mst_data:
+                # Mostrar mapa con MST
+                folium_map = st.session_state.simulation.get_folium_map_with_mst(st.session_state.mst_data)
+                if folium_map:
+                    st_folium(folium_map, width=900, height=650)
+                else:
+                    st.error("Error al generar el mapa MST.")
             else:
-                st.error("Error al generar el mapa.")
+                # Mostrar mapa normal
+                folium_map = st.session_state.simulation.get_folium_map(st.session_state.current_path)
+                if folium_map:
+                    st_folium(folium_map, width=900, height=650)
+                else:
+                    st.error("Error al generar el mapa.")
         
         with col2:
             st.subheader("🛣️ Calculadora de Rutas")
@@ -113,9 +129,24 @@ elif tab_selection == "🌍 Explore Network":
                     else:
                         st.error("El origen y destino deben ser diferentes.")
                 
-                # Botón Kruskal
-                if st.button("🌳 Kruskal", type="secondary"):
-                    st.info("Algoritmo de Kruskal ejecutado")
+                # Botones para Kruskal
+                col_kr1, col_kr2 = st.columns(2)
+                
+                with col_kr1:
+                    if st.button("🌳 Mostrar Kruskal MST", type="secondary"):
+                        mst_data = st.session_state.simulation.execute_kruskal()
+                        if mst_data:
+                            st.session_state.show_kruskal = True
+                            st.session_state.mst_data = mst_data
+                            st.session_state.current_path = None  # Limpiar ruta actual
+                            st.success(f"MST calculado: {len(mst_data['mst_edges'])} aristas, peso total: {mst_data['total_weight']:.2f}")
+                            st.rerun()
+                
+                with col_kr2:
+                    if st.button("🔄 Vista Normal", type="secondary"):
+                        st.session_state.show_kruskal = False
+                        st.session_state.mst_data = None
+                        st.rerun()
                 
                 # Mostrar información de la ruta actual
                 if 'current_route_info' in st.session_state and st.session_state.current_route_info:

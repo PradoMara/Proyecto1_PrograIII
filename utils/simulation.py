@@ -3,6 +3,7 @@ from datetime import datetime
 from models.graph import Graph
 from models.node import NodeType
 from algorithms.pathfinding import PathFinder
+from algorithms.kruskal import KruskalMST
 from data_structures.avl_tree import AVLTree
 from utils.visualization import NetworkVisualizer
 
@@ -158,6 +159,42 @@ class DroneSimulation:
             return self.visualizer.create_folium_map(highlight_path)
         except Exception as e:
             st.error(f"Error al generar mapa: {str(e)}")
+            return None
+    
+    def execute_kruskal(self):
+        """Ejecuta el algoritmo de Kruskal y devuelve las aristas del MST"""
+        if not self.is_initialized:
+            return None
+        
+        try:
+            kruskal = KruskalMST()
+            
+            # Agregar todas las aristas del grafo al algoritmo de Kruskal
+            for node_id, neighbors in self.graph.edges.items():
+                for neighbor_id, weight in neighbors:
+                    if node_id < neighbor_id:  # Evitar aristas duplicadas
+                        kruskal.add_edge(node_id, neighbor_id, weight)
+            
+            # Encontrar el MST
+            mst_edges, total_weight = kruskal.find_mst()
+            
+            return {
+                'mst_edges': mst_edges,
+                'total_weight': total_weight
+            }
+        except Exception as e:
+            st.error(f"Error al ejecutar Kruskal: {str(e)}")
+            return None
+    
+    def get_folium_map_with_mst(self, mst_data):
+        """Obtiene el mapa de Folium mostrando solo las aristas del MST"""
+        if not self.is_initialized or not mst_data:
+            return None
+        
+        try:
+            return self.visualizer.create_folium_map_mst(mst_data['mst_edges'])
+        except Exception as e:
+            st.error(f"Error al generar mapa MST: {str(e)}")
             return None
     
     def get_clients_data(self):
