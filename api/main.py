@@ -1,12 +1,19 @@
 """
 API principal para el sistema de gestión de rutas de drones
 """
+import sys
+import os
+
+# Agregar el directorio raíz al path para importaciones
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Importar routers
-from .routers import clients, orders, reports, info
-from .config import settings
+# Importar routers con imports absolutos
+from api.routers import clients, orders, reports, info, routes, graph, drones, charging_stations
+from api.config import settings
 
 # Crear instancia de FastAPI
 app = FastAPI(
@@ -31,6 +38,10 @@ app.include_router(clients.router)
 app.include_router(orders.router)
 app.include_router(reports.router)
 app.include_router(info.router)
+app.include_router(routes.router)
+app.include_router(graph.router)
+app.include_router(drones.router)
+app.include_router(charging_stations.router)
 
 # Ruta de bienvenida
 @app.get("/")

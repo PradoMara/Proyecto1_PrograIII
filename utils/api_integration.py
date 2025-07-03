@@ -12,7 +12,8 @@ def save_simulation_to_api(simulation_instance):
         if not simulation_instance or not simulation_instance.is_initialized:
             return False
         
-        simulation_data_file = "simulation_state.json"
+        # Usar archivo tanto en directorio actual como en api/
+        simulation_files = ["simulation_state.json", "api/simulation_state.json"]
         
         # Obtener datos de la simulación
         clients_data = simulation_instance.get_clients_data()
@@ -40,6 +41,7 @@ def save_simulation_to_api(simulation_instance):
         simulation_data = {
             "is_active": True,
             "initialized_at": datetime.now().isoformat(),
+            "last_updated": datetime.now().isoformat(),
             "config": {
                 "total_nodes": len(simulation_instance.graph.nodes) if simulation_instance.graph else 0,
                 "total_edges": len(simulation_instance.graph.edges) if simulation_instance.graph else 0,
@@ -59,9 +61,16 @@ def save_simulation_to_api(simulation_instance):
             }
         }
         
-        # Guardar en archivo
-        with open(simulation_data_file, 'w', encoding='utf-8') as f:
-            json.dump(simulation_data, f, ensure_ascii=False, indent=2)
+        # Guardar en múltiples archivos para asegurar sincronización
+        for file_path in simulation_files:
+            try:
+                # Crear directorio si no existe
+                os.makedirs(os.path.dirname(file_path), exist_ok=True) if os.path.dirname(file_path) else None
+                
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(simulation_data, f, ensure_ascii=False, indent=2)
+            except Exception as e:
+                print(f"Error al guardar en {file_path}: {e}")
         
         return True
         
@@ -91,3 +100,9 @@ def clear_simulation_data():
 def update_simulation_data(simulation_instance):
     """Actualiza los datos de la simulación (para llamar periódicamente)"""
     return save_simulation_to_api(simulation_instance)
+
+def auto_sync_simulation(simulation_instance):
+    """Función para sincronización automática cada vez que se modifica la simulación"""
+    if simulation_instance and simulation_instance.is_initialized:
+        return save_simulation_to_api(simulation_instance)
+    return False

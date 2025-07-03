@@ -21,8 +21,22 @@ class Node:
         self.visit_count = 0  # Contador de visitas para estadísticas
         
     def _generate_name(self):
-        """Genera un nombre aleatorio para el nodo"""
-        return ''.join(random.choices(string.ascii_uppercase, k=1))
+        """Genera un nombre aleatorio descriptivo para el nodo"""
+        if self.type == NodeType.STORAGE:
+            prefixes = ["Almacén", "Bodega", "Depósito", "Centro"]
+            suffixes = ["Norte", "Sur", "Este", "Oeste", "Central", "Principal"]
+        elif self.type == NodeType.CHARGING:
+            prefixes = ["Estación", "Centro", "Punto", "Base"]
+            suffixes = ["Recarga", "Energía", "Carga", "Power"]
+        else:  # CLIENT
+            prefixes = ["Cliente", "Empresa", "Oficina", "Local"]
+            suffixes = ["Central", "Principal", "Norte", "Sur", "Este", "Oeste"]
+        
+        prefix = random.choice(prefixes)
+        suffix = random.choice(suffixes)
+        number = random.randint(1, 99)
+        
+        return f"{prefix}_{suffix}_{number}"
     
     def increment_visit(self):
         """Incrementa el contador de visitas"""

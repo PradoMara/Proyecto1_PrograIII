@@ -210,3 +210,102 @@ classDiagram
     Order ..> Node : origin/destination
     Client ..> Node : associated_node
 ```
+
+# 📋 Descripción del Diagrama de Clases
+
+## 🏗️ Arquitectura del Sistema
+
+El sistema está diseñado siguiendo una arquitectura en capas bien definida:
+
+### 📦 **Capa de Modelos (models/)**
+- **NodeType (Enum)**: Define los tipos de nodos del sistema
+- **Node**: Representa un punto en la red con coordenadas y tipo
+- **Order**: Maneja las órdenes de entrega con estados y rutas
+- **Client**: Representa clientes asociados a nodos
+- **Graph**: Estructura principal que contiene toda la red
+
+### 🔍 **Capa de Algoritmos (algorithms/)**
+- **PathFinder**: Implementa BFS, DFS y Topological Sort para búsqueda de rutas
+
+### 🌳 **Capa de Estructuras de Datos (data_structures/)**
+- **AVLNode**: Nodo individual del árbol AVL
+- **AVLTree**: Árbol balanceado para registro de frecuencia de rutas
+
+### 🛠️ **Capa de Utilidades (utils/)**
+- **DroneSimulation**: Controlador principal del sistema
+- **NetworkVisualizer**: Maneja visualizaciones de red y árboles
+
+### 🎨 **Capa Visual (visual/)**
+- **NetworkXAdapter**: Adaptador para integración con NetworkX
+- **Dashboard**: Interfaz de dashboard con métricas
+
+## 🔗 Relaciones Principales
+
+### **Composición (Fuerte)**
+- `DroneSimulation` **contiene** `Graph`, `PathFinder`, `NetworkVisualizer`, `AVLTree`
+- `Graph` **contiene** múltiples `Node`, `Client`, `Order`
+- `AVLTree` **contiene** múltiples `AVLNode`
+
+### **Agregación (Débil)**
+- `Client` **tiene** múltiples `Order`
+- `PathFinder` **usa** `Graph`
+- `NetworkVisualizer` **visualiza** `Graph`
+
+### **Dependencia**
+- `Node` **usa** `NodeType`
+- `Order` **referencia** `Node` (origen/destino)
+- `Dashboard` **usa** `DroneSimulation`
+
+## 🎯 Patrones de Diseño Utilizados
+
+### **1. Facade Pattern**
+- `DroneSimulation` actúa como fachada que simplifica el acceso a subsistemas complejos
+
+### **2. Strategy Pattern**
+- `PathFinder` implementa múltiples algoritmos de búsqueda (BFS, DFS, Topological Sort)
+
+### **3. Adapter Pattern**
+- `NetworkXAdapter` adapta la estructura `Graph` interna a NetworkX
+
+### **4. Observer Pattern**
+- `Node` mantiene contador de visitas que se actualiza automáticamente
+
+### **5. Factory Pattern**
+- `Graph.generate_random_network()` actúa como factory para crear redes
+
+## 🔄 Flujo Principal de Datos
+
+1. **Inicialización**: `DroneSimulation` → `Graph.generate_random_network()`
+2. **Cálculo de Rutas**: `DroneSimulation` → `PathFinder` → `Graph`
+3. **Registro**: `DroneSimulation` → `AVLTree.add_route()`
+4. **Visualización**: `DroneSimulation` → `NetworkVisualizer` → `Graph`
+5. **Estadísticas**: `DroneSimulation` → `Graph.get_network_stats()`
+
+## 🎛️ Principios SOLID Aplicados
+
+### **Single Responsibility**
+- Cada clase tiene una responsabilidad específica y bien definida
+
+### **Open/Closed**
+- `PathFinder` es extensible para nuevos algoritmos sin modificar código existente
+
+### **Liskov Substitution**
+- Los algoritmos de búsqueda son intercambiables manteniendo la misma interfaz
+
+### **Interface Segregation**
+- Las interfaces están divididas por funcionalidad específica
+
+### **Dependency Inversion**
+- Las clases de alto nivel dependen de abstracciones, no de implementaciones concretas
+
+## 📊 Métricas del Sistema
+
+- **Clases Principales**: 11
+- **Enumeraciones**: 1
+- **Relaciones de Composición**: 8
+- **Relaciones de Agregación**: 4
+- **Relaciones de Dependencia**: 6
+- **Métodos Públicos**: ~60
+- **Métodos Privados**: ~15
+
+Esta arquitectura garantiza escalabilidad, mantenibilidad y extensibilidad del sistema de simulación de drones.

@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
+from datetime import datetime
 from streamlit_folium import st_folium
 from utils.simulation import DroneSimulation
-from utils.api_integration import save_simulation_to_api
+from utils.api_integration import save_simulation_to_api, auto_sync_simulation
 
 # Configuración de la página
 st.set_page_config(
@@ -166,9 +167,11 @@ elif tab_selection == "🌍 Explore Network":
                             st.session_state.current_destination
                         )
                         if success:
+                            # Sincronizar con API automáticamente
+                            auto_sync_simulation(st.session_state.simulation)
                             st.session_state.current_path = None
                             st.session_state.current_route_info = None
-                            st.success("✅ Entrega completada!")
+                            st.success("✅ Entrega completada y sincronizada con API!")
                             st.rerun()
 
 # =================== PESTAÑA 3: CLIENTS & ORDERS ===================
@@ -217,6 +220,96 @@ elif tab_selection == "📋 Route Analytics":
                 st.pyplot(avl_fig)
             else:
                 st.info("El árbol AVL está vacío.")
+        
+        # Sección para generar reporte PDF
+        st.markdown("---")
+        st.subheader("📄 Generación de Reportes")
+        
+        col3, col4, col5 = st.columns([1, 1, 2])
+        
+        with col3:
+            if st.button("📊 Generate PDF Report", type="primary"):
+                with st.spinner("Generando reporte PDF..."):
+                    try:
+                        # Sincronizar datos antes de generar reporte
+                        auto_sync_simulation(st.session_state.simulation)
+                        
+                        # Importar la utilidad de PDF
+                        from utils.pdf_report import generate_pdf_report
+                        
+                        # Preparar datos para el reporte
+                        simulation_data = {
+                            'clients': st.session_state.simulation.get_clients_data(),
+                            'orders': st.session_state.simulation.get_orders_data(),
+                            'visit_statistics': {
+                                'clients': [],
+                                'recharges': [],
+                                'storages': []
+                            },
+                            'summary': {
+                                'network_stats': st.session_state.simulation.get_network_stats()
+                            }
+                        }
+                        
+                        # Obtener estadísticas de visitas
+                        storage_visits, charging_visits, client_visits = st.session_state.simulation.get_visit_statistics()
+                        
+                        # Formatear estadísticas de visitas
+                        simulation_data['visit_statistics'] = {
+                            'clients': [
+                                {'name': name, 'visits': visits}
+                                for name, visits in sorted(client_visits.items(), key=lambda x: x[1], reverse=True)
+                            ],
+                            'recharges': [
+                                {'name': name, 'visits': visits}
+                                for name, visits in sorted(charging_visits.items(), key=lambda x: x[1], reverse=True)
+                            ],
+                            'storages': [
+                                {'name': name, 'visits': visits}
+                                for name, visits in sorted(storage_visits.items(), key=lambda x: x[1], reverse=True)
+                            ]
+                        }
+                        
+                        # Generar PDF
+                        pdf_buffer = generate_pdf_report(simulation_data)
+                        
+                        # Botón de descarga
+                        st.success("✅ Reporte PDF generado exitosamente!")
+                        st.download_button(
+                            label="📥 Descargar Reporte PDF",
+                            data=pdf_buffer.getvalue(),
+                            file_name=f"reporte_simulacion_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                            mime="application/pdf"
+                        )
+                        
+                    except Exception as e:
+                        st.error(f"Error al generar el reporte PDF: {str(e)}")
+        
+        with col4:
+            if st.button("🔄 Sync with API", type="secondary"):
+                with st.spinner("Sincronizando datos con API..."):
+                    try:
+                        success = auto_sync_simulation(st.session_state.simulation)
+                        if success:
+                            st.success("✅ Datos sincronizados con API exitosamente!")
+                        else:
+                            st.error("❌ Error al sincronizar datos con API")
+                    except Exception as e:
+                        st.error(f"Error en la sincronización: {str(e)}")
+        
+        with col5:
+            st.info("""
+            **📋 Contenido del Reporte PDF:**
+            - 📊 Tabla completa de clientes con ID, nombre, tipo y total de órdenes
+            - 📦 Datos de órdenes en formato JSON (como respuesta de API)
+            - 🥧 Gráfico de distribución de nodos por tipo (pastel)
+            - 📈 Gráficos de barras de nodos más visitados por categoría:
+              - 👤 Clientes más visitados
+              - 🔋 Estaciones de recarga más visitadas  
+              - 📦 Nodos de almacenamiento más visitados
+            """)
+            
+            st.info("🔄 **Sincronización**: Los datos se sincronizan automáticamente al completar entregas. Usa el botón 'Sync with API' para forzar actualización manual.")
 
 # =================== PESTAÑA 5: GENERAL STATISTICS ===================
 elif tab_selection == "📈 General Statistics":

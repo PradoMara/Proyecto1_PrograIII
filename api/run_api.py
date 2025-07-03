@@ -17,6 +17,10 @@ def main():
         print("🛑 Para detener: Ctrl+C")
         print("-" * 60)
         
+        # Cambiar el directorio de trabajo al directorio raíz del proyecto
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        os.chdir(project_root)
+        
         uvicorn.run(
             "api.main:app",
             host="0.0.0.0",
