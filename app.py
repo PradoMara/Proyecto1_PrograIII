@@ -1,9 +1,41 @@
 import streamlit as st
 import pandas as pd
+import json
+import os
 from datetime import datetime
 from streamlit_folium import st_folium
 from utils.simulation import DroneSimulation
 from utils.api_integration import save_simulation_to_api, auto_sync_simulation
+
+def is_simulation_active():
+    """Verifica si la simulación está activa leyendo el archivo JSON"""
+    try:
+        if os.path.exists("simulation_state.json"):
+            with open("simulation_state.json", 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get('is_active', False)
+        return False
+    except:
+        return False
+
+def stop_simulation():
+    """Detiene la simulación cambiando is_active a False en el JSON"""
+    try:
+        if os.path.exists("simulation_state.json"):
+            with open("simulation_state.json", 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            data['is_active'] = False
+            data['last_updated'] = datetime.now().isoformat()
+            data['finished_at'] = datetime.now().isoformat()
+            
+            with open("simulation_state.json", 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            
+            return True
+    except Exception as e:
+        st.error(f"Error al detener simulación: {str(e)}")
+        return False
 
 # Configuración de la página
 st.set_page_config(
@@ -63,6 +95,21 @@ if tab_selection == "🔄 Run Simulation":
                 save_simulation_to_api(st.session_state.simulation)
                 st.success("🎉 Simulación inicializada exitosamente!")
                 st.info("📡 Datos guardados para acceso desde la API")
+    
+    # Botón para finalizar simulación (solo visible si está activa)
+    if is_simulation_active():
+        st.write("---")
+        st.info("🔄 **Simulación Activa** - La simulación está corriendo actualmente")
+        
+        if st.button("🛑 Fin Simulación", type="secondary"):
+            with st.spinner("Finalizando simulación..."):
+                if stop_simulation():
+                    st.success("✅ Simulación finalizada exitosamente!")
+                    st.info("📡 Estado actualizado en el archivo de simulación")
+                    # Rerun para actualizar la UI
+                    st.rerun()
+                else:
+                    st.error("❌ Error al finalizar la simulación")
 
 # =================== PESTAÑA 2: EXPLORE NETWORK ===================
 elif tab_selection == "🌍 Explore Network":

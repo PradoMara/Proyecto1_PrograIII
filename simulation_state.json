@@ -1,914 +1,187 @@
 {
   "is_active": true,
-  "initialized_at": "2025-07-02T21:52:35.415423",
+  "initialized_at": "2025-07-03T12:28:32.103027",
+  "last_updated": "2025-07-03T12:28:32.103036",
   "config": {
-    "total_nodes": 36,
-    "total_edges": 36,
-    "total_orders": 68,
-    "total_clients": 22
+    "total_nodes": 15,
+    "total_edges": 15,
+    "total_orders": 10,
+    "total_clients": 9
   },
   "clients": [
     {
-      "ID": 1,
+      "ID": "5EFCA7C0",
       "Nombre": "Cliente_1",
       "Tipo": "Cliente",
       "Total Pedidos": 2,
-      "Nodo ID": 0
-    },
-    {
-      "ID": 2,
-      "Nombre": "Cliente_2",
-      "Tipo": "Cliente",
-      "Total Pedidos": 3,
       "Nodo ID": 1
     },
     {
-      "ID": 3,
-      "Nombre": "Cliente_3",
+      "ID": "5BEB45E9",
+      "Nombre": "Cliente_2",
       "Tipo": "Cliente",
-      "Total Pedidos": 2,
+      "Total Pedidos": 0,
       "Nodo ID": 2
     },
     {
-      "ID": 4,
-      "Nombre": "Cliente_4",
-      "Tipo": "Cliente",
-      "Total Pedidos": 5,
-      "Nodo ID": 5
-    },
-    {
-      "ID": 5,
-      "Nombre": "Cliente_5",
+      "ID": "8AB3DF1B",
+      "Nombre": "Cliente_3",
       "Tipo": "Cliente",
       "Total Pedidos": 3,
+      "Nodo ID": 4
+    },
+    {
+      "ID": "24CF8701",
+      "Nombre": "Cliente_4",
+      "Tipo": "Cliente",
+      "Total Pedidos": 1,
       "Nodo ID": 6
     },
     {
-      "ID": 6,
-      "Nombre": "Cliente_6",
+      "ID": "147F651A",
+      "Nombre": "Cliente_5",
       "Tipo": "Cliente",
-      "Total Pedidos": 3,
+      "Total Pedidos": 0,
       "Nodo ID": 7
     },
     {
-      "ID": 7,
+      "ID": "006AE867",
+      "Nombre": "Cliente_6",
+      "Tipo": "Cliente",
+      "Total Pedidos": 0,
+      "Nodo ID": 8
+    },
+    {
+      "ID": "5CC2E2EA",
       "Nombre": "Cliente_7",
       "Tipo": "Cliente",
-      "Total Pedidos": 3,
-      "Nodo ID": 9
+      "Total Pedidos": 1,
+      "Nodo ID": 11
     },
     {
-      "ID": 8,
+      "ID": "6073D755",
       "Nombre": "Cliente_8",
       "Tipo": "Cliente",
-      "Total Pedidos": 1,
-      "Nodo ID": 10
-    },
-    {
-      "ID": 9,
-      "Nombre": "Cliente_9",
-      "Tipo": "Cliente",
-      "Total Pedidos": 7,
+      "Total Pedidos": 2,
       "Nodo ID": 12
     },
     {
-      "ID": 10,
-      "Nombre": "Cliente_10",
+      "ID": "4FF67318",
+      "Nombre": "Cliente_9",
       "Tipo": "Cliente",
       "Total Pedidos": 1,
       "Nodo ID": 14
-    },
-    {
-      "ID": 11,
-      "Nombre": "Cliente_11",
-      "Tipo": "Cliente",
-      "Total Pedidos": 4,
-      "Nodo ID": 17
-    },
-    {
-      "ID": 12,
-      "Nombre": "Cliente_12",
-      "Tipo": "Cliente",
-      "Total Pedidos": 2,
-      "Nodo ID": 21
-    },
-    {
-      "ID": 13,
-      "Nombre": "Cliente_13",
-      "Tipo": "Cliente",
-      "Total Pedidos": 4,
-      "Nodo ID": 23
-    },
-    {
-      "ID": 14,
-      "Nombre": "Cliente_14",
-      "Tipo": "Cliente",
-      "Total Pedidos": 3,
-      "Nodo ID": 24
-    },
-    {
-      "ID": 15,
-      "Nombre": "Cliente_15",
-      "Tipo": "Cliente",
-      "Total Pedidos": 3,
-      "Nodo ID": 25
-    },
-    {
-      "ID": 16,
-      "Nombre": "Cliente_16",
-      "Tipo": "Cliente",
-      "Total Pedidos": 4,
-      "Nodo ID": 26
-    },
-    {
-      "ID": 17,
-      "Nombre": "Cliente_17",
-      "Tipo": "Cliente",
-      "Total Pedidos": 3,
-      "Nodo ID": 27
-    },
-    {
-      "ID": 18,
-      "Nombre": "Cliente_18",
-      "Tipo": "Cliente",
-      "Total Pedidos": 1,
-      "Nodo ID": 28
-    },
-    {
-      "ID": 19,
-      "Nombre": "Cliente_19",
-      "Tipo": "Cliente",
-      "Total Pedidos": 3,
-      "Nodo ID": 29
-    },
-    {
-      "ID": 20,
-      "Nombre": "Cliente_20",
-      "Tipo": "Cliente",
-      "Total Pedidos": 4,
-      "Nodo ID": 31
-    },
-    {
-      "ID": 21,
-      "Nombre": "Cliente_21",
-      "Tipo": "Cliente",
-      "Total Pedidos": 3,
-      "Nodo ID": 33
-    },
-    {
-      "ID": 22,
-      "Nombre": "Cliente_22",
-      "Tipo": "Cliente",
-      "Total Pedidos": 4,
-      "Nodo ID": 34
     }
   ],
   "orders": [
     {
-      "ID": 1,
-      "Cliente ID": 15,
-      "Origen": 11,
-      "Destino": 25,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
+      "ID": "BBFD0FF1",
+      "Cliente ID": "5EFCA7C0",
+      "Origen": 13,
+      "Destino": 1,
+      "Status": "Entregado",
+      "Fecha Creación": "2025-07-03 12:28:32",
+      "Prioridad": 1,
+      "Fecha Entrega": "2025-07-03 12:29:29",
       "Costo Total": 0
     },
     {
-      "ID": 2,
-      "Cliente ID": 17,
-      "Origen": 32,
-      "Destino": 27,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 3,
-      "Cliente ID": 5,
+      "ID": "82817BD4",
+      "Cliente ID": "6073D755",
       "Origen": 3,
-      "Destino": 6,
+      "Destino": 12,
+      "Status": "Cancelado",
+      "Fecha Creación": "2025-07-03 12:28:32",
+      "Prioridad": 1,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0,
+      "Fecha Cancelacion": "2025-07-03 12:30:20"
+    },
+    {
+      "ID": "A3A82BA7",
+      "Cliente ID": "5CC2E2EA",
+      "Origen": 13,
+      "Destino": 11,
       "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
+      "Fecha Creación": "2025-07-03 12:28:32",
       "Prioridad": 2,
       "Fecha Entrega": "N/A",
       "Costo Total": 0
     },
     {
-      "ID": 4,
-      "Cliente ID": 20,
-      "Origen": 4,
-      "Destino": 31,
+      "ID": "45AE595C",
+      "Cliente ID": "8AB3DF1B",
+      "Origen": 3,
+      "Destino": 4,
       "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 4,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 5,
-      "Cliente ID": 7,
-      "Origen": 32,
-      "Destino": 9,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 4,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 6,
-      "Cliente ID": 20,
-      "Origen": 8,
-      "Destino": 31,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
+      "Fecha Creación": "2025-07-03 12:28:32",
       "Prioridad": 2,
       "Fecha Entrega": "N/A",
       "Costo Total": 0
     },
     {
-      "ID": 7,
-      "Cliente ID": 20,
-      "Origen": 11,
-      "Destino": 31,
+      "ID": "8175767A",
+      "Cliente ID": "8AB3DF1B",
+      "Origen": 0,
+      "Destino": 4,
       "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
+      "Fecha Creación": "2025-07-03 12:28:32",
       "Prioridad": 1,
       "Fecha Entrega": "N/A",
       "Costo Total": 0
     },
     {
-      "ID": 8,
-      "Cliente ID": 13,
-      "Origen": 22,
-      "Destino": 23,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 4,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 9,
-      "Cliente ID": 17,
-      "Origen": 4,
-      "Destino": 27,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 5,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 10,
-      "Cliente ID": 1,
-      "Origen": 8,
-      "Destino": 0,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 5,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 11,
-      "Cliente ID": 9,
-      "Origen": 4,
-      "Destino": 12,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 4,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 12,
-      "Cliente ID": 9,
-      "Origen": 32,
-      "Destino": 12,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 13,
-      "Cliente ID": 13,
-      "Origen": 32,
-      "Destino": 23,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 1,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 14,
-      "Cliente ID": 9,
+      "ID": "AC676608",
+      "Cliente ID": "6073D755",
       "Origen": 13,
       "Destino": 12,
       "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 15,
-      "Cliente ID": 6,
-      "Origen": 8,
-      "Destino": 7,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 4,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 16,
-      "Cliente ID": 17,
-      "Origen": 11,
-      "Destino": 27,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 1,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 17,
-      "Cliente ID": 12,
-      "Origen": 22,
-      "Destino": 21,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 18,
-      "Cliente ID": 22,
-      "Origen": 32,
-      "Destino": 34,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 1,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 19,
-      "Cliente ID": 4,
-      "Origen": 13,
-      "Destino": 5,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 20,
-      "Cliente ID": 20,
-      "Origen": 8,
-      "Destino": 31,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 21,
-      "Cliente ID": 21,
-      "Origen": 32,
-      "Destino": 33,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 1,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 22,
-      "Cliente ID": 14,
-      "Origen": 8,
-      "Destino": 24,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
+      "Fecha Creación": "2025-07-03 12:28:32",
       "Prioridad": 5,
       "Fecha Entrega": "N/A",
       "Costo Total": 0
     },
     {
-      "ID": 23,
-      "Cliente ID": 3,
-      "Origen": 32,
-      "Destino": 2,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 24,
-      "Cliente ID": 9,
-      "Origen": 4,
-      "Destino": 12,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 25,
-      "Cliente ID": 11,
+      "ID": "56A545FD",
+      "Cliente ID": "5EFCA7C0",
       "Origen": 3,
-      "Destino": 17,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 26,
-      "Cliente ID": 21,
-      "Origen": 4,
-      "Destino": 33,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 27,
-      "Cliente ID": 12,
-      "Origen": 3,
-      "Destino": 21,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 5,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 28,
-      "Cliente ID": 2,
-      "Origen": 22,
       "Destino": 1,
       "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
+      "Fecha Creación": "2025-07-03 12:28:32",
       "Prioridad": 2,
       "Fecha Entrega": "N/A",
       "Costo Total": 0
     },
     {
-      "ID": 29,
-      "Cliente ID": 5,
-      "Origen": 11,
-      "Destino": 6,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 1,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 30,
-      "Cliente ID": 6,
+      "ID": "E8711FF7",
+      "Cliente ID": "4FF67318",
       "Origen": 3,
-      "Destino": 7,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 5,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 31,
-      "Cliente ID": 11,
-      "Origen": 13,
-      "Destino": 17,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 4,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 32,
-      "Cliente ID": 16,
-      "Origen": 8,
-      "Destino": 26,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 5,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 33,
-      "Cliente ID": 16,
-      "Origen": 8,
-      "Destino": 26,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 4,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 34,
-      "Cliente ID": 19,
-      "Origen": 32,
-      "Destino": 29,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 1,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 35,
-      "Cliente ID": 14,
-      "Origen": 8,
-      "Destino": 24,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 4,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 36,
-      "Cliente ID": 10,
-      "Origen": 4,
       "Destino": 14,
       "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 37,
-      "Cliente ID": 2,
-      "Origen": 3,
-      "Destino": 1,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 1,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 38,
-      "Cliente ID": 13,
-      "Origen": 8,
-      "Destino": 23,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 5,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 39,
-      "Cliente ID": 22,
-      "Origen": 3,
-      "Destino": 34,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
+      "Fecha Creación": "2025-07-03 12:28:32",
       "Prioridad": 2,
       "Fecha Entrega": "N/A",
       "Costo Total": 0
     },
     {
-      "ID": 40,
-      "Cliente ID": 5,
-      "Origen": 3,
+      "ID": "D56EC614",
+      "Cliente ID": "24CF8701",
+      "Origen": 0,
       "Destino": 6,
       "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 41,
-      "Cliente ID": 9,
-      "Origen": 13,
-      "Destino": 12,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
+      "Fecha Creación": "2025-07-03 12:28:32",
       "Prioridad": 3,
       "Fecha Entrega": "N/A",
       "Costo Total": 0
     },
     {
-      "ID": 42,
-      "Cliente ID": 4,
-      "Origen": 3,
-      "Destino": 5,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 5,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 43,
-      "Cliente ID": 13,
-      "Origen": 11,
-      "Destino": 23,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 44,
-      "Cliente ID": 11,
+      "ID": "70EE0319",
+      "Cliente ID": "8AB3DF1B",
       "Origen": 13,
-      "Destino": 17,
+      "Destino": 4,
       "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 45,
-      "Cliente ID": 19,
-      "Origen": 13,
-      "Destino": 29,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 4,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 46,
-      "Cliente ID": 14,
-      "Origen": 8,
-      "Destino": 24,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 47,
-      "Cliente ID": 15,
-      "Origen": 4,
-      "Destino": 25,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 48,
-      "Cliente ID": 15,
-      "Origen": 3,
-      "Destino": 25,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 49,
-      "Cliente ID": 9,
-      "Origen": 22,
-      "Destino": 12,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 50,
-      "Cliente ID": 19,
-      "Origen": 13,
-      "Destino": 29,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 4,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 51,
-      "Cliente ID": 4,
-      "Origen": 8,
-      "Destino": 5,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 52,
-      "Cliente ID": 7,
-      "Origen": 13,
-      "Destino": 9,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
+      "Fecha Creación": "2025-07-03 12:28:32",
       "Prioridad": 1,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 53,
-      "Cliente ID": 4,
-      "Origen": 11,
-      "Destino": 5,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 1,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 54,
-      "Cliente ID": 18,
-      "Origen": 13,
-      "Destino": 28,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 55,
-      "Cliente ID": 16,
-      "Origen": 13,
-      "Destino": 26,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 4,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 56,
-      "Cliente ID": 11,
-      "Origen": 4,
-      "Destino": 17,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 1,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 57,
-      "Cliente ID": 2,
-      "Origen": 11,
-      "Destino": 1,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 1,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 58,
-      "Cliente ID": 1,
-      "Origen": 4,
-      "Destino": 0,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 4,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 59,
-      "Cliente ID": 16,
-      "Origen": 4,
-      "Destino": 26,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 1,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 60,
-      "Cliente ID": 9,
-      "Origen": 13,
-      "Destino": 12,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 61,
-      "Cliente ID": 8,
-      "Origen": 22,
-      "Destino": 10,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 62,
-      "Cliente ID": 4,
-      "Origen": 11,
-      "Destino": 5,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 5,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 63,
-      "Cliente ID": 22,
-      "Origen": 22,
-      "Destino": 34,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 64,
-      "Cliente ID": 21,
-      "Origen": 32,
-      "Destino": 33,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 65,
-      "Cliente ID": 22,
-      "Origen": 4,
-      "Destino": 34,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 66,
-      "Cliente ID": 6,
-      "Origen": 3,
-      "Destino": 7,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 67,
-      "Cliente ID": 3,
-      "Origen": 32,
-      "Destino": 2,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 4,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": 68,
-      "Cliente ID": 7,
-      "Origen": 11,
-      "Destino": 9,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-02 21:52:35",
-      "Prioridad": 3,
       "Fecha Entrega": "N/A",
       "Costo Total": 0
     }
@@ -920,21 +193,21 @@
   },
   "summary": {
     "network_stats": {
-      "total_nodes": 36,
+      "total_nodes": 15,
       "storage": {
-        "count": 7,
-        "percentage": 19.444444444444446
+        "count": 3,
+        "percentage": 20.0
       },
       "charging": {
-        "count": 7,
-        "percentage": 19.444444444444446
+        "count": 3,
+        "percentage": 20.0
       },
       "client": {
-        "count": 22,
-        "percentage": 61.111111111111114
+        "count": 9,
+        "percentage": 60.0
       },
-      "total_edges": 68,
-      "total_orders": 68
+      "total_edges": 20,
+      "total_orders": 10
     },
     "total_visits": 0,
     "most_visited_client": "N/A",

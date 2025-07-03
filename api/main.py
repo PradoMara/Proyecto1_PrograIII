@@ -11,8 +11,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Importar routers con imports absolutos
-from api.routers import clients, orders, reports, info, routes, graph, drones, charging_stations
+# Importar routers en español
+from api.routers import clientes, ordenes, reportes, informacion
+# También mantener routers en inglés para compatibilidad
+from api.routers import clients, orders, reports, info
 from api.config import settings
 
 # Crear instancia de FastAPI
@@ -33,33 +35,48 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Incluir routers
+# Incluir routers en español (principales)
+app.include_router(clientes.router)
+app.include_router(ordenes.router)
+app.include_router(reportes.router)
+app.include_router(informacion.router)
+
+# Mantener routers en inglés para compatibilidad
 app.include_router(clients.router)
 app.include_router(orders.router)
 app.include_router(reports.router)
 app.include_router(info.router)
-app.include_router(routes.router)
-app.include_router(graph.router)
-app.include_router(drones.router)
-app.include_router(charging_stations.router)
 
 # Ruta de bienvenida
 @app.get("/")
 async def root():
     return {
-        "message": "¡API de Drones funcionando correctamente!",
+        "message": "🚁 API de Simulación de Drones - Correos Chile",
         "version": "1.0.0",
         "status": "active",
-        "documentation": "/docs"
+        "descripcion": "API REST para gestión de rutas de drones con datos reales de simulación",
+        "endpoints_principales": {
+            "clientes": "/clientes/",
+            "ordenes": "/ordenes/",
+            "reportes": "/reportes/pdf",
+            "informacion": "/info/reportes/resumen"
+        },
+        "documentacion": "/docs",
+        "estado_simulacion": "/info/reportes/resumen"
     }
 
 # Ruta de health check
 @app.get("/health")
 async def health_check():
+    from api.simulation_manager import simulation_manager
+    
+    simulation_status = simulation_manager.get_simulation_status()
+    
     return {
         "status": "healthy", 
         "service": "drones-api",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "simulacion": simulation_status
     }
 
 # Ruta de información de la API

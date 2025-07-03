@@ -26,7 +26,9 @@ class SimulationDataManager:
         if self._initialized:
             return
         
-        self.simulation_data_file = "simulation_state.json"
+        # Usar el archivo del directorio raíz del proyecto
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.simulation_data_file = os.path.join(project_root, "simulation_state.json")
         self.simulation = None
         self._initialized = True
     
@@ -100,8 +102,11 @@ class SimulationDataManager:
         if clients_data["status"] != "success":
             return clients_data
         
+        # Buscar por ID (puede ser string hasheado o numérico)
         for client in clients_data["data"]:
-            if client.get("client_id") == client_id:
+            # Manejar tanto IDs string como numéricos
+            client_stored_id = client.get("ID")
+            if str(client_stored_id) == str(client_id):
                 return {
                     "status": "success",
                     "message": "Cliente encontrado",
@@ -146,8 +151,11 @@ class SimulationDataManager:
         if orders_data["status"] != "success":
             return orders_data
         
+        # Buscar por ID (puede ser string hasheado o numérico)
         for order in orders_data["data"]:
-            if order.get("order_id") == order_id:
+            # Manejar tanto IDs string como numéricos
+            order_stored_id = order.get("ID")
+            if str(order_stored_id) == str(order_id):
                 return {
                     "status": "success",
                     "message": "Orden encontrada",
@@ -175,10 +183,12 @@ class SimulationDataManager:
             
             orders = data.get('orders', [])
             for order in orders:
-                if order.get("order_id") == order_id:
-                    if order.get("status") in ["pending", "in_progress"]:
-                        order["status"] = "cancelled"
-                        order["cancelled_at"] = datetime.now().isoformat()
+                # Manejar tanto IDs string como numéricos
+                order_stored_id = order.get("ID")
+                if str(order_stored_id) == str(order_id):
+                    if order.get("Status") in ["Pendiente", "En Progreso"]:
+                        order["Status"] = "Cancelado"
+                        order["Fecha Cancelacion"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         
                         # Guardar cambios
                         with open(self.simulation_data_file, 'w', encoding='utf-8') as f:
@@ -193,7 +203,7 @@ class SimulationDataManager:
                     else:
                         return {
                             "status": "error",
-                            "message": f"La orden {order_id} no puede ser cancelada (estado: {order.get('status')})",
+                            "message": f"La orden {order_id} no puede ser cancelada (estado: {order.get('Status')})",
                             "success": False
                         }
             
@@ -225,10 +235,12 @@ class SimulationDataManager:
             
             orders = data.get('orders', [])
             for order in orders:
-                if order.get("order_id") == order_id:
-                    if order.get("status") in ["pending", "in_progress"]:
-                        order["status"] = "completed"
-                        order["completed_at"] = datetime.now().isoformat()
+                # Manejar tanto IDs string como numéricos
+                order_stored_id = order.get("ID")
+                if str(order_stored_id) == str(order_id):
+                    if order.get("Status") in ["Pendiente", "En Progreso"]:
+                        order["Status"] = "Entregado"
+                        order["Fecha Entrega"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         
                         # Guardar cambios
                         with open(self.simulation_data_file, 'w', encoding='utf-8') as f:
@@ -243,7 +255,7 @@ class SimulationDataManager:
                     else:
                         return {
                             "status": "error",
-                            "message": f"La orden {order_id} no puede ser completada (estado: {order.get('status')})",
+                            "message": f"La orden {order_id} no puede ser completada (estado: {order.get('Status')})",
                             "success": False
                         }
             
@@ -318,6 +330,44 @@ class SimulationDataManager:
                 "status": "error", 
                 "message": f"Error al obtener resumen: {str(e)}",
                 "data": {}
+            }
+
+    def stop_simulation(self) -> Dict[str, Any]:
+        """Detiene la simulación cambiando is_active a False"""
+        if not os.path.exists(self.simulation_data_file):
+            return {
+                "status": "error",
+                "message": "Archivo de simulación no encontrado",
+                "success": False
+            }
+        
+        try:
+            with open(self.simulation_data_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            # Cambiar is_active a False
+            data['is_active'] = False
+            data['last_updated'] = datetime.now().isoformat()
+            data['finished_at'] = datetime.now().isoformat()
+            
+            # Guardar cambios
+            with open(self.simulation_data_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            
+            return {
+                "status": "success",
+                "message": "Simulación finalizada exitosamente",
+                "success": True,
+                "data": {
+                    "is_active": False,
+                    "finished_at": data['finished_at']
+                }
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Error al finalizar simulación: {str(e)}",
+                "success": False
             }
 
 # Instancia global del gestor
