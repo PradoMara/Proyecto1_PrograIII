@@ -200,14 +200,29 @@ elif tab_selection == "🌍 Explore Network":
                 if 'current_route_info' in st.session_state and st.session_state.current_route_info:
                     route_info = st.session_state.current_route_info
                     
+                    # Obtener el costo (priorizar dijkstra_distance, luego distance)
+                    cost = route_info.get('dijkstra_distance', route_info.get('distance', 0))
+                    
                     st.text_area(
                         "Ruta Encontrada:",
-                        f"Path: {route_info['path_string']} | Cost: {route_info['cost']}",
+                        f"Path: {route_info['path_string']} | Cost: {cost}",
                         height=70
                     )
                     
+                    # Información adicional de la ruta
+                    col_info1, col_info2 = st.columns(2)
+                    with col_info1:
+                        st.metric("Distancia Total", f"{cost:.2f}")
+                    with col_info2:
+                        battery_used = route_info.get('battery_used', 0)
+                        st.metric("Batería Usada", f"{battery_used:.2f}")
+                    
+                    # Botón para completar entrega - hacer más visible
+                    st.markdown("---")
+                    st.markdown("### 🚀 Completar Entrega")
+                    
                     # Botón para completar entrega
-                    if st.button("Complete Delivery and Create Order ✅"):
+                    if st.button("✅ Complete Delivery and Create Order", type="primary", use_container_width=True):
                         success = st.session_state.simulation.complete_delivery(
                             route_info, 
                             st.session_state.current_origin, 
@@ -220,6 +235,8 @@ elif tab_selection == "🌍 Explore Network":
                             st.session_state.current_route_info = None
                             st.success("✅ Entrega completada y sincronizada con API!")
                             st.rerun()
+                        else:
+                            st.error("❌ Error al completar la entrega")
 
 # =================== PESTAÑA 3: CLIENTS & ORDERS ===================
 elif tab_selection == "🌐 Clients & Orders":
