@@ -2,6 +2,7 @@ import random
 import math
 from collections import defaultdict, deque
 from models.node import Node, NodeType, Client, Order
+from algorithms.TDA_HashMap import generate_client_id, generate_order_id
 
 class Graph:
     """Grafo que representa la red de distribución de drones"""
@@ -27,8 +28,10 @@ class Graph:
         
         # Si es un nodo cliente, crear cliente asociado
         if node_type == NodeType.CLIENT:
-            client = Client(self.next_client_id, f"Cliente_{self.next_client_id}", node_id)
-            self.clients[self.next_client_id] = client
+            client_name = f"Cliente_{self.next_client_id}"
+            client_id = generate_client_id(client_name, f"cliente{self.next_client_id}@mail.com")
+            client = Client(client_id, client_name, node_id)
+            self.clients[client_id] = client
             self.next_client_id += 1
         
         return node
@@ -171,7 +174,8 @@ class Graph:
             
             if client_id:
                 priority = random.randint(1, 5)
-                order = Order(self.next_order_id, client_id, origin, destination, priority)
+                order_id = generate_order_id(client_id, f"items_{self.next_order_id}")
+                order = Order(order_id, client_id, origin, destination, priority)
                 self.orders.append(order)
                 self.clients[client_id].add_order(order)
                 self.next_order_id += 1
