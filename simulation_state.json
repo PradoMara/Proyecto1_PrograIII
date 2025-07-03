@@ -1,7 +1,7 @@
 {
   "is_active": true,
-  "initialized_at": "2025-07-03T12:28:32.103027",
-  "last_updated": "2025-07-03T12:28:32.103036",
+  "initialized_at": "2025-07-03T12:41:29.413431",
+  "last_updated": "2025-07-03T12:41:29.413437",
   "config": {
     "total_nodes": 15,
     "total_edges": 15,
@@ -10,178 +10,177 @@
   },
   "clients": [
     {
-      "ID": "5EFCA7C0",
+      "ID": "33710817",
       "Nombre": "Cliente_1",
       "Tipo": "Cliente",
-      "Total Pedidos": 2,
+      "Total Pedidos": 4,
+      "Nodo ID": 0
+    },
+    {
+      "ID": "5B8A0F69",
+      "Nombre": "Cliente_2",
+      "Tipo": "Cliente",
+      "Total Pedidos": 1,
       "Nodo ID": 1
     },
     {
-      "ID": "5BEB45E9",
-      "Nombre": "Cliente_2",
-      "Tipo": "Cliente",
-      "Total Pedidos": 0,
-      "Nodo ID": 2
-    },
-    {
-      "ID": "8AB3DF1B",
+      "ID": "96A57CF8",
       "Nombre": "Cliente_3",
       "Tipo": "Cliente",
-      "Total Pedidos": 3,
-      "Nodo ID": 4
-    },
-    {
-      "ID": "24CF8701",
-      "Nombre": "Cliente_4",
-      "Tipo": "Cliente",
       "Total Pedidos": 1,
-      "Nodo ID": 6
+      "Nodo ID": 3
     },
     {
-      "ID": "147F651A",
-      "Nombre": "Cliente_5",
+      "ID": "4722315A",
+      "Nombre": "Cliente_4",
       "Tipo": "Cliente",
       "Total Pedidos": 0,
       "Nodo ID": 7
     },
     {
-      "ID": "006AE867",
+      "ID": "69B23B03",
+      "Nombre": "Cliente_5",
+      "Tipo": "Cliente",
+      "Total Pedidos": 1,
+      "Nodo ID": 9
+    },
+    {
+      "ID": "254F787F",
       "Nombre": "Cliente_6",
       "Tipo": "Cliente",
       "Total Pedidos": 0,
-      "Nodo ID": 8
+      "Nodo ID": 10
     },
     {
-      "ID": "5CC2E2EA",
+      "ID": "5F006948",
       "Nombre": "Cliente_7",
       "Tipo": "Cliente",
       "Total Pedidos": 1,
       "Nodo ID": 11
     },
     {
-      "ID": "6073D755",
+      "ID": "44C3752F",
       "Nombre": "Cliente_8",
       "Tipo": "Cliente",
-      "Total Pedidos": 2,
+      "Total Pedidos": 1,
       "Nodo ID": 12
     },
     {
-      "ID": "4FF67318",
+      "ID": "8CF55A2E",
       "Nombre": "Cliente_9",
       "Tipo": "Cliente",
       "Total Pedidos": 1,
-      "Nodo ID": 14
+      "Nodo ID": 13
     }
   ],
   "orders": [
     {
-      "ID": "BBFD0FF1",
-      "Cliente ID": "5EFCA7C0",
-      "Origen": 13,
-      "Destino": 1,
-      "Status": "Entregado",
-      "Fecha Creación": "2025-07-03 12:28:32",
-      "Prioridad": 1,
-      "Fecha Entrega": "2025-07-03 12:29:29",
-      "Costo Total": 0
-    },
-    {
-      "ID": "82817BD4",
-      "Cliente ID": "6073D755",
-      "Origen": 3,
-      "Destino": 12,
-      "Status": "Cancelado",
-      "Fecha Creación": "2025-07-03 12:28:32",
-      "Prioridad": 1,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0,
-      "Fecha Cancelacion": "2025-07-03 12:30:20"
-    },
-    {
-      "ID": "A3A82BA7",
-      "Cliente ID": "5CC2E2EA",
-      "Origen": 13,
-      "Destino": 11,
+      "ID": "833F0354",
+      "Cliente ID": "33710817",
+      "Origen": 6,
+      "Destino": 0,
       "Status": "Pendiente",
-      "Fecha Creación": "2025-07-03 12:28:32",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": "45AE595C",
-      "Cliente ID": "8AB3DF1B",
-      "Origen": 3,
-      "Destino": 4,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-03 12:28:32",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": "8175767A",
-      "Cliente ID": "8AB3DF1B",
-      "Origen": 0,
-      "Destino": 4,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-03 12:28:32",
-      "Prioridad": 1,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": "AC676608",
-      "Cliente ID": "6073D755",
-      "Origen": 13,
-      "Destino": 12,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-03 12:28:32",
-      "Prioridad": 5,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": "56A545FD",
-      "Cliente ID": "5EFCA7C0",
-      "Origen": 3,
-      "Destino": 1,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-03 12:28:32",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": "E8711FF7",
-      "Cliente ID": "4FF67318",
-      "Origen": 3,
-      "Destino": 14,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-03 12:28:32",
-      "Prioridad": 2,
-      "Fecha Entrega": "N/A",
-      "Costo Total": 0
-    },
-    {
-      "ID": "D56EC614",
-      "Cliente ID": "24CF8701",
-      "Origen": 0,
-      "Destino": 6,
-      "Status": "Pendiente",
-      "Fecha Creación": "2025-07-03 12:28:32",
+      "Fecha Creación": "2025-07-03 12:39:27",
       "Prioridad": 3,
       "Fecha Entrega": "N/A",
       "Costo Total": 0
     },
     {
-      "ID": "70EE0319",
-      "Cliente ID": "8AB3DF1B",
-      "Origen": 13,
-      "Destino": 4,
+      "ID": "24F89631",
+      "Cliente ID": "33710817",
+      "Origen": 6,
+      "Destino": 0,
       "Status": "Pendiente",
-      "Fecha Creación": "2025-07-03 12:28:32",
+      "Fecha Creación": "2025-07-03 12:39:27",
+      "Prioridad": 4,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": "39BC18A6",
+      "Cliente ID": "33710817",
+      "Origen": 2,
+      "Destino": 0,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-03 12:39:27",
+      "Prioridad": 4,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": "6D352687",
+      "Cliente ID": "5F006948",
+      "Origen": 2,
+      "Destino": 11,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-03 12:39:27",
+      "Prioridad": 5,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": "C551FB19",
+      "Cliente ID": "96A57CF8",
+      "Origen": 2,
+      "Destino": 3,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-03 12:39:27",
+      "Prioridad": 4,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": "83B4F292",
+      "Cliente ID": "44C3752F",
+      "Origen": 5,
+      "Destino": 12,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-03 12:39:27",
       "Prioridad": 1,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": "3EA74156",
+      "Cliente ID": "8CF55A2E",
+      "Origen": 6,
+      "Destino": 13,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-03 12:39:27",
+      "Prioridad": 5,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": "959009AF",
+      "Cliente ID": "33710817",
+      "Origen": 5,
+      "Destino": 0,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-03 12:39:27",
+      "Prioridad": 1,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": "38FEA7EE",
+      "Cliente ID": "5B8A0F69",
+      "Origen": 2,
+      "Destino": 1,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-03 12:39:27",
+      "Prioridad": 2,
+      "Fecha Entrega": "N/A",
+      "Costo Total": 0
+    },
+    {
+      "ID": "358EC235",
+      "Cliente ID": "69B23B03",
+      "Origen": 6,
+      "Destino": 9,
+      "Status": "Pendiente",
+      "Fecha Creación": "2025-07-03 12:39:27",
+      "Prioridad": 3,
       "Fecha Entrega": "N/A",
       "Costo Total": 0
     }

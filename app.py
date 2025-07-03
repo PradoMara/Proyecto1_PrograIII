@@ -228,17 +228,138 @@ elif tab_selection == "🌐 Clients & Orders":
     if not st.session_state.simulation.is_initialized:
         st.warning("⚠️ Debe inicializar la simulación primero.")
     else:
+        # Información sobre sincronización con API
+        st.info("💡 **Datos en Tiempo Real**: Esta información se sincroniza automáticamente con la API. Use los botones 'Recargar' para ver cambios de estado.")
+        
         col1, col2 = st.columns(2)
         
         with col1:
-            st.subheader("👥 Lista de Clientes")
-            clients_data = st.session_state.simulation.get_clients_data()
-            st.json(clients_data)
+            # Header con botón de recargar para clientes
+            subcol1, subcol2 = st.columns([3, 1])
+            with subcol1:
+                st.subheader("👥 Lista de Clientes")
+            with subcol2:
+                if st.button("🔄 Recargar", key="reload_clients", type="secondary"):
+                    st.rerun()
+            
+            # Leer datos actualizados del JSON
+            if os.path.exists("simulation_state.json"):
+                try:
+                    with open("simulation_state.json", 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    clients_data = data.get('clients', [])
+                    
+                    # Mostrar en formato tabla más legible
+                    if clients_data:
+                        clients_df = pd.DataFrame(clients_data)
+                        st.dataframe(clients_df, use_container_width=True)
+                        st.caption(f"📊 Total: {len(clients_data)} clientes")
+                    else:
+                        st.info("No hay clientes disponibles")
+                except Exception as e:
+                    st.error(f"Error al cargar clientes: {str(e)}")
+                    # Fallback a datos de simulación
+                    clients_data = st.session_state.simulation.get_clients_data()
+                    st.json(clients_data)
+            else:
+                # Fallback a datos de simulación
+                clients_data = st.session_state.simulation.get_clients_data()
+                st.json(clients_data)
         
         with col2:
-            st.subheader("📦 Lista de Órdenes")
-            orders_data = st.session_state.simulation.get_orders_data()
-            st.json(orders_data)
+            # Header con botón de recargar para órdenes
+            subcol1, subcol2 = st.columns([3, 1])
+            with subcol1:
+                st.subheader("📦 Lista de Órdenes")
+            with subcol2:
+                if st.button("🔄 Recargar", key="reload_orders", type="secondary"):
+                    st.rerun()
+            
+            # Leer datos actualizados del JSON
+            if os.path.exists("simulation_state.json"):
+                try:
+                    with open("simulation_state.json", 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    orders_data = data.get('orders', [])
+                    
+                    # Mostrar en formato tabla más legible
+                    if orders_data:
+                        orders_df = pd.DataFrame(orders_data)
+                        
+                        # Aplicar colores por estado
+                        def color_status(val):
+                            if val == 'Entregado':
+                                return 'background-color: #d4edda; color: #155724'
+                            elif val == 'Cancelado':
+                                return 'background-color: #f8d7da; color: #721c24'
+                            elif val == 'En Progreso':
+                                return 'background-color: #fff3cd; color: #856404'
+                            else:  # Pendiente
+                                return 'background-color: #cce5ff; color: #004085'
+                        
+                        # Mostrar tabla con estilos
+                        styled_df = orders_df.style.applymap(color_status, subset=['Status'])
+                        st.dataframe(styled_df, use_container_width=True)
+                        
+                        # Estadísticas de órdenes
+                        status_counts = orders_df['Status'].value_counts()
+                        st.caption(f"📊 Total: {len(orders_data)} órdenes")
+                        
+                        # Mostrar conteo por estado
+                        status_cols = st.columns(len(status_counts))
+                        for i, (status, count) in enumerate(status_counts.items()):
+                            with status_cols[i]:
+                                if status == 'Entregado':
+                                    st.success(f"✅ {status}: {count}")
+                                elif status == 'Cancelado':
+                                    st.error(f"❌ {status}: {count}")
+                                elif status == 'En Progreso':
+                                    st.warning(f"⏳ {status}: {count}")
+                                else:
+                                    st.info(f"⏸️ {status}: {count}")
+                    else:
+                        st.info("No hay órdenes disponibles")
+                except Exception as e:
+                    st.error(f"Error al cargar órdenes: {str(e)}")
+                    # Fallback a datos de simulación
+                    orders_data = st.session_state.simulation.get_orders_data()
+                    st.json(orders_data)
+            else:
+                # Fallback a datos de simulación
+                orders_data = st.session_state.simulation.get_orders_data()
+                st.json(orders_data)
+        
+        # Sección de información sobre la API
+        st.markdown("---")
+        st.subheader("🔗 Integración con API")
+        
+        col3, col4, col5 = st.columns(3)
+        
+        with col3:
+            st.info("""
+            **💻 Endpoints API Disponibles:**
+            - `GET /clientes/` - Lista clientes
+            - `GET /ordenes/` - Lista órdenes
+            - `POST /ordenes/{id}/cancelar` - Cancelar orden
+            - `POST /ordenes/{id}/completar` - Completar orden
+            """)
+        
+        with col4:
+            st.success("""
+            **✅ Estados de Órdenes:**
+            - 🔵 **Pendiente** - Orden creada
+            - 🟡 **En Progreso** - Siendo procesada
+            - 🟢 **Entregado** - Completada exitosamente
+            - 🔴 **Cancelado** - Orden cancelada
+            """)
+        
+        with col5:
+            st.warning("""
+            **⚡ Cambios en Tiempo Real:**
+            - Los cambios desde la API se reflejan aquí
+            - Use 'Recargar' para ver actualizaciones
+            - Los datos se sincronizan automáticamente
+            """)
 
 # =================== PESTAÑA 4: ROUTE ANALYTICS ===================
 elif tab_selection == "📋 Route Analytics":
